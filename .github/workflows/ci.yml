@@ -1,0 +1,22 @@
+name: Publish
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set-up Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: "16.x"
+      - run: npm install
+      - run: ./build.sh
+      - name: "Publish"
+        run: node sync.js '${{ secrets.PROD_FTP_USERNAME }}' '${{ secrets.PROD_FTP_PASSWORD }}' .
+        if: github.event_name != 'pull_request'

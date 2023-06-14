@@ -1,0 +1,39 @@
+name: Publish Preview
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set-up Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: "16.x"
+      - run: npm install
+      - run: ./build.sh
+      - name: "Publish PR Review"
+        run: node sync.js '${{ secrets.PREVIEW_FTP_USERNAME }}' '${{ secrets.PREVIEW_FTP_PASSWORD }}' 'pr-${{github.event.number}}'
+        if: github.event_name == 'pull_request'
+      - uses: actions/github-script@v5
+        if: github.event_name == 'pull_request'
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: 'Preview at https://pr-watch.codequest.club/pr-${{github.event.number}}'
+            })
+      - name: "Publish to preview"
+        run: node sync.js '${{ secrets.PREVIEW_FTP_USERNAME }}' '${{ secrets.PREVIEW_FTP_PASSWORD }}' .
+        if: github.event_name != 'pull_request'
