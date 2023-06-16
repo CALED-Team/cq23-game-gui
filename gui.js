@@ -26,7 +26,7 @@ const additionalMap = {
 
 const bulletTextures = {
     // Blue: PIXI.Texture.from("PNG/Bullets/bulletBlueSilver_outline.png"),
-    Blue: PIXI.Texture.from("PNG/Homemade/bullet.PNG"),
+    Blue: PIXI.Texture.from("PNG/Homemade/bullet.png"),
     Green: PIXI.Texture.from("PNG/Bullets/bulletGreenSilver_outline.png"),
     Red: PIXI.Texture.from("PNG/Bullets/bulletRedSilver_outline.png"),
     Beige: PIXI.Texture.from("PNG/Bullets/bulletBlueSilver_outline.png"),
@@ -118,7 +118,7 @@ class Game {
         // top boundary
         let top = new PIXI.Sprite(
             PIXI.Texture.from(
-                `PNG/Homemade/storm.PNG`
+                `PNG/Homemade/storm.png`
             )
         );
         top.height = 10;
@@ -131,7 +131,7 @@ class Game {
         // bottom boundary
         let bottom = new PIXI.Sprite(
             PIXI.Texture.from(
-                `PNG/Homemade/storm.PNG`
+                `PNG/Homemade/storm.png`
             )
         );
         bottom.height = 10;
@@ -144,7 +144,7 @@ class Game {
         // top boundary
         let left = new PIXI.Sprite(
             PIXI.Texture.from(
-                `PNG/Homemade/storm.PNG`
+                `PNG/Homemade/storm.png`
             )
         );
         left.height = this.height;
@@ -157,7 +157,7 @@ class Game {
         // top boundary
         let right = new PIXI.Sprite(
             PIXI.Texture.from(
-                `PNG/Homemade/storm.PNG`
+                `PNG/Homemade/storm.png`
             )
         );
         right.height = this.height;
