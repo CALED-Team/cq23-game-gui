@@ -54,13 +54,13 @@ class GameInfo {
     }
     
     update() {
-        console.log("updating", this.counter);
         if (this.counter >= 11) {
             this._finishPolling();
         }
         
         let next_replay_url =
         this.baseUrl + `get_replay_file_content?file_name=replay-${this.counter}.txt`;
+        console.log("updating", this.counter, next_replay_url);
         
         
         let current_counter = this.counter;

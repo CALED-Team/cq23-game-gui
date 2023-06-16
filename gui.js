@@ -181,7 +181,7 @@ class Game {
         let first_timestep_data = this.gameInfo.getTimestepData(0);
         console.log(first_timestep_data);
 
-        Object.entries(first_timestep_data.object_info).forEach(
+        Object.entries(first_timestep_data.updated_objects).forEach(
             ([key, objData]) => {
                 if (key.indexOf("tank") == -1) {
                     return;
@@ -338,7 +338,7 @@ class Game {
             // console.log(curPosition, newPosition);
 
             if (prevIndex == newIndex) {
-                const curSpots = this.gameInfo.getTimestepData(prevIndex)["object_info"];
+                const curSpots = this.gameInfo.getTimestepData(prevIndex)["updated_objects"];
                 Object.keys(curSpots).forEach((key) => {
                     if (!this.tanks.hasOwnProperty(key)) return;
                     const position = curSpots[key]["position"];
@@ -347,7 +347,7 @@ class Game {
                     this.tanks[key].container.y = y;
                 });
             } else {
-                const nextSpots = this.gameInfo.getTimestepData(newIndex)["object_info"];
+                const nextSpots = this.gameInfo.getTimestepData(newIndex)["updated_objects"];
                 Object.keys(nextSpots).forEach((key) => {
                     if (!this.tanks.hasOwnProperty(key)) return;
                     const new_pos = nextSpots[key]["position"];
@@ -358,7 +358,7 @@ class Game {
 
                 // bullet stuff
                 let bullets = Object.entries(
-                    this.gameInfo.getTimestepData(newIndex).object_info
+                    this.gameInfo.getTimestepData(newIndex).updated_objects
                 ).filter(([k, _]) => k.indexOf("bullet") != -1);
 
                 bullets.forEach(([key, objData]) => {
@@ -382,7 +382,7 @@ class Game {
 
                 // boundaries
                 let boundaries = Object.entries(
-                    this.gameInfo.getTimestepData(newIndex).object_info
+                    this.gameInfo.getTimestepData(newIndex).updated_objects
                 ).filter(([k, _]) => k.indexOf("closing_boundary") != -1);
                 if (boundaries.length === 1) {
                     let b = boundaries[0];
@@ -392,16 +392,16 @@ class Game {
 
 
                 // events
-                this.gameInfo.getTimestepData(newIndex).events.forEach((e) => {
+                // this.gameInfo.getTimestepData(newIndex).events.forEach((e) => {
 
-                    if (e.event_type == "BULLET_DESTROYED") {
-                        this.destroyBullet(e.data.id);
-                    } else if (e.event_type == "WALL_DESTROYED") {
-                        this.destroyWall(e);
-                    }
+                //     if (e.event_type == "BULLET_DESTROYED") {
+                //         this.destroyBullet(e.data.id);
+                //     } else if (e.event_type == "WALL_DESTROYED") {
+                //         this.destroyWall(e);
+                //     }
 
 
-                })
+                // })
 
 
             }
