@@ -45,7 +45,7 @@ class GameInfo {
             } else if ("client_info" in line) {
                 this.clientInfo = line.client_info;
             } else {
-                if ((this.organisedData.length == 0) && (Object.keys(line.object_info).length === 0)) {
+                if ((this.organisedData.length == 0) && (Object.keys(line.updated_objects).length === 0)) {
                     return;
                 }
                 this.organisedData.push(line);
