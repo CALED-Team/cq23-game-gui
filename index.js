@@ -60,7 +60,7 @@ class GameInfo {
         }
         
         let next_replay_url =
-        this.baseUrl + `?file_name=replay-${this.counter}.txt`;
+        this.baseUrl + `get_replay_file_content?file_name=replay-${this.counter}.txt`;
         
         
         let current_counter = this.counter;
