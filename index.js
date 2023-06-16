@@ -53,11 +53,7 @@ class GameInfo {
         })
     }
     
-    update() {
-        if (this.counter >= 11) {
-            this._finishPolling();
-        }
-        
+    update() {        
         let next_replay_url =
         this.baseUrl + `get_replay_file_content?file_name=replay-${this.counter}.txt`;
         console.log("updating", this.counter, next_replay_url);
