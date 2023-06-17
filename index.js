@@ -1,102 +1,110 @@
-const POLL_FREQUENCY_DELAY = 200;
-
+const POLL_FREQUENCY_DELAY = 500;
 
 class GameInfo {
     constructor(baseUrl) {
         this.baseUrl = baseUrl;
         this.counter = 1;
-        
+
         this.rawData = {};
         this.organisedData = [];
-        
+
         this.mapInfo = null;
         this.clientInfo = null;
 
         this._setToPoll();
     }
-    
+
     _setToPoll() {
         // console.log(this.counter);
         this.pollingIntervalId = setInterval(
             this.update.bind(this),
             POLL_FREQUENCY_DELAY
-            );
-        }
-        
-        _finishPolling() {
-            clearInterval(this.pollingIntervalId);
-            
-            console.log(this.mapInfo, this.clientInfo);
-            console.log(this.organisedData);
-        }
-        
-        _addToOrganisedData(data) {
-            let lines = data.content.split("\n");
-            lines = lines.map((l) => l.trim());
-            lines = lines.filter((l) => l != "");
-            lines = lines.map((l) => l.replaceAll("Infinity", '"Infinity"'));
-            lines = lines.map(JSON.parse);
-            
-            lines.forEach((line) => {
-                if (("victor" in line) || ("vanquished" in line)) {
+        );
+        this.update();
+    }
+
+    _finishPolling() {
+        clearInterval(this.pollingIntervalId);
+
+        console.log(this.mapInfo, this.clientInfo);
+        console.log(this.organisedData);
+    }
+
+    _addToOrganisedData(data) {
+        let lines = data.content.replace('\n"EOF"\n', "");
+        lines = lines.split("\n");
+        lines = lines.map((l) => l.trim());
+        lines = lines.filter((l) => l != "");
+        lines = lines.map((l) => l.replaceAll("Infinity", '"Infinity"'));
+        lines = lines.map(JSON.parse);
+
+        lines.forEach((line) => {
+            if ("victor" in line || "vanquished" in line) {
                 this._finishPolling();
             } else if ("map" in line) {
                 this.mapInfo = line.map;
             } else if ("client_info" in line) {
                 this.clientInfo = line.client_info;
             } else {
-                if ((this.organisedData.length == 0) && (Object.keys(line.updated_objects).length === 0)) {
+                if (
+                    this.organisedData.length == 0 &&
+                    Object.keys(line.updated_objects).length === 0
+                ) {
                     return;
                 }
                 this.organisedData.push(line);
             }
-        })
+        });
     }
-    
-    update() {        
+
+    update() {
         let next_replay_url =
-        this.baseUrl + `get_replay_file_content?file_name=replay-${this.counter}.txt`;
+            this.baseUrl +
+            `get_replay_file_content?file_name=replay-${this.counter}.txt`;
         console.log("updating", this.counter, next_replay_url);
-        
-        
+
         let current_counter = this.counter;
         fetch(next_replay_url)
-        .then((response) => {
-            if (!response.ok) {
-                return Promise.reject(response);
-            }
-            return response.json();
-        })
-        .then((data) => {
-            console.log("Success", current_counter);
+            .then((response) => {
+                if (!response.ok) {
+                    return Promise.reject(response);
+                }
+                return response.json();
+            })
+            .then((data) => {
+                console.log("Success", current_counter);
 
-            if (!(current_counter in this.rawData)) {
-                this._addToOrganisedData(data);
-            }
-            this.rawData[current_counter] = data.content;
-            this.counter = current_counter + 1;
-        })
-        .catch((error) => {
-            if (typeof error.json === "function") {
-                error
-                .json()
-                .then((jsonError) => {
-                    console.log("Json error from API");
-                    console.log(jsonError);
-                })
-                .catch((genericError) => {
-                    console.log("Generic error from API");
-                    console.log(error.statusText);
-                    });
+                if (!data.content.includes('\n"EOF"\n')) {
+                    return;
+                }
+
+                if (!(current_counter in this.rawData)) {
+                    this._addToOrganisedData(data);
+                }
+                this.rawData[current_counter] = data.content;
+                this.counter = current_counter + 1;
+            })
+            .catch((error) => {
+                if (typeof error.json === "function") {
+                    error
+                        .json()
+                        .then((jsonError) => {
+                            console.log("Json error from API");
+                            console.log(jsonError);
+                        })
+                        .catch((genericError) => {
+                            console.log("Generic error from API");
+                            console.log(error.statusText);
+                        });
                 } else {
                     console.log("Fetch error", error);
                     console.log(error);
                 }
             });
-        }
-        
-        getTimestepData(index) {
-            if ((index >= 0) && (index < this.organisedData.length)) {
+    }
+
+    getTimestepData(index) {
+        if (index >= 0 && index < this.organisedData.length) {
             return this.organisedData[index];
         } else {
             return null;
