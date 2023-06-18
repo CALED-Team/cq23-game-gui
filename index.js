@@ -1,17 +1,23 @@
 const POLL_FREQUENCY_DELAY = 500;
 
 class GameInfo {
-    constructor(baseUrl) {
+    constructor(baseUrl, infoDivId) {
         this.baseUrl = baseUrl;
         this.counter = 1;
 
         this.rawData = {};
         this.organisedData = [];
+        this.attempts = {};
+
+        this.finished = false;
 
         this.mapInfo = null;
         this.clientInfo = null;
 
+        this.infoDiv = document.getElementById(infoDivId);
+
         this._setToPoll();
+
     }
 
     _setToPoll() {
@@ -26,8 +32,12 @@ class GameInfo {
     _finishPolling() {
         clearInterval(this.pollingIntervalId);
 
+        this.finished = true;
+
         console.log(this.mapInfo, this.clientInfo);
         console.log(this.organisedData);
+
+        this._updateInfo();
     }
 
     _addToOrganisedData(data) {
@@ -57,13 +67,29 @@ class GameInfo {
         });
     }
 
+    _updateInfo() {
+        if (this.finished) {
+            this.infoDiv.innerHTML = `<span style="color: green">Done</span>, total replay files collected: ${Object.keys(this.rawData).length}`;
+        } else {
+            this.infoDiv.innerHTML = `Collecting replay file: ${this.counter}, <span style="color: grey">number of attempts: ${(this.counter in this.attempts ? this.attempts[this.counter] : 0)}</span>`;
+        }
+        this.infoDiv.innerHTML += `<br>Total turns collected: ${this.organisedData.length}`;
+    }
+
     update() {
+        this._updateInfo();
+
         let next_replay_url =
             this.baseUrl +
             `get_replay_file_content?file_name=replay-${this.counter}.txt`;
         console.log("updating", this.counter, next_replay_url);
 
         let current_counter = this.counter;
+        if (current_counter in this.attempts) {
+            this.attempts[current_counter] += 1;
+        } else {
+            this.attempts[current_counter] = 0;
+        }
         fetch(next_replay_url)
             .then((response) => {
                 if (!response.ok) {
@@ -120,6 +146,6 @@ if (!searchParams.has("base_url")) {
     alert("URL requires the 'base_url' parameter");
 } else {
     baseUrl = searchParams.get("base_url");
-    let gameInfo = new GameInfo(baseUrl);
+    let gameInfo = new GameInfo(baseUrl, "gui-debug-info");
     let game = new Game("gui", gameInfo, { height: 700, width: 1100 });
 }
