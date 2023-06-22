@@ -49,11 +49,54 @@ class Game {
         this.app = new PIXI.Application(dimensions);
         this.main_div.appendChild(this.app.view);
 
+
+        this.tick = 0;
+        this.elapsed = 0;
+
+
         this.mapInitialised = false;
         this.tanksInitialised = false;
 
+        this.initControls();
+        this.initStatus();
         this.initPlayback();
     }
+
+
+    reset() {
+        console.log("reset() called");
+        this.elapsed = 0;
+        this.tick = 0;
+        this.mapInitialised = false;
+        this.tanksInitialised = false;
+    }
+
+    initControls() {
+        this.controlsDiv = document.createElement("div")
+        this.main_div.appendChild(this.controlsDiv);
+
+        let resetButton = document.createElement("button");
+        resetButton.innerText = "Reset";
+        resetButton.addEventListener("click", this.reset.bind(this));
+        this.controlsDiv.appendChild(resetButton);
+    }
+
+    initStatus() {
+        this.statusDiv = document.createElement("div")
+        this.main_div.appendChild(this.statusDiv);
+        this.updateStatus();
+    }
+
+    updateStatus() {
+        if (this.gameInfo.finished) {
+            let _max = this.gameInfo.organisedData.length;
+            this.statusDiv.innerHTML = `<label for=\"file\">Downloading progress:</label><progress id=\"file\" value=\"${this.tick}\" max=\"${_max}\">${this.tick}</progress>`;
+        } else {
+            this.statusDiv.innerHTML = `<label for=\"file\">Downloading progress:</label><progress id=\"file\" value=\"${this.tick}\" max=\"1000\">${this.tick}</progress>`;
+            this.statusDiv.innerHTML += `not finished yet`;
+        }
+    }
+
 
     initMap() {
         this.mapInitialised = true;
@@ -298,12 +341,12 @@ class Game {
     }
 
     initPlayback() {
-        let elapsed = 0.0;
-        let iteration = 0;
 
         this.app.ticker.add((delta) => {
 
+            // console.log(this.tick, this.elapsed);
 
+            
             // Initialise stuff if needed
             if (!this.mapInitialised) {
                 if (this.gameInfo.mapInfo !== null) {
@@ -311,9 +354,9 @@ class Game {
                 }
                 return;
             }
-
+            
             // TODO: initialise client info
-
+            
             if (!this.tanksInitialised) {
                 let first_timestep_data = this.gameInfo.getTimestepData(0);
                 if (first_timestep_data !== null) {
@@ -323,17 +366,20 @@ class Game {
                 return;
             }
             
-            const currentIndex = elapsed / 2;
+            const currentIndex = this.elapsed / 2;
             const prevIndex = Math.floor(currentIndex);
             const newIndex = Math.ceil(currentIndex);
+
+            this.tick = newIndex;
+            this.updateStatus();
             
             if (this.gameInfo.getTimestepData(newIndex) === null) {
                 // Stop Updating
                 return;
             }
             
-            elapsed += delta;
-            iteration += 1;
+            this.elapsed += delta;
+            this.tick += 1;
 
             // console.log(curPosition, newPosition);
 
