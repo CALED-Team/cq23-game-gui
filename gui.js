@@ -121,10 +121,7 @@ class Game {
         gridMap = gridMap.map((l) => l.replace("\n", ""));
         this.map = gridMap;
 
-        this.destructables = Array.from(
-            Array(this.rows),
-            () => new Array(this.cols)
-        );
+        this.walls = {};
 
         for (let i = 0; i < this.rows; i++) {
             for (let j = 0; j < this.cols; j++) {
@@ -136,21 +133,39 @@ class Game {
                 floor.y = i * this.tileHeight;
                 this.ground_layer.addChild(floor);
 
-                if (this.map[i][j] in additionalMap) {
-                    const obstacle = new PIXI.Sprite(
-                        additionalMap[this.map[i][j]]
-                    );
-                    obstacle.width = this.tileWidth;
-                    obstacle.height = this.tileHeight;
-                    obstacle.anchor.set(0, 0);
-                    obstacle.x = j * this.tileWidth;
-                    obstacle.y = i * this.tileHeight;
-                    this.ground_layer.addChild(obstacle);
+                // if (this.map[i][j] in additionalMap) {
+                //     const obstacle = new PIXI.Sprite(
+                //         additionalMap[this.map[i][j]]
+                //     );
+                //     obstacle.width = this.tileWidth;
+                //     obstacle.height = this.tileHeight;
+                //     obstacle.anchor.set(0, 0);
+                //     obstacle.x = j * this.tileWidth;
+                //     obstacle.y = i * this.tileHeight;
+                //     this.ground_layer.addChild(obstacle);
 
-                    this.destructables[i][j] = obstacle;
-                }
+                //     this.destructables[i][j] = obstacle;
+                // }
             }
         }
+
+        Object.entries(this.gameInfo.getTimestepData(0).updated_objects).filter(([key, _]) => key.indexOf("wall") !== -1).forEach(([key, obj]) => {
+            const obstacle = new PIXI.Sprite(
+                obj.type === 4 ? PIXI.Texture.from("PNG/Obstacles/barrelGrey_up.png") : PIXI.Texture.from("PNG/Obstacles/sandbagBeige.png")
+            );
+            obstacle.width = this.tileWidth;
+            obstacle.height = this.tileHeight;
+            obstacle.anchor.set(0, 0);
+
+            let [x, y] = obj.position;
+            let new_pos = this.continuousToCanvasCoords(x, y);
+
+            obstacle.x = new_pos.x;
+            obstacle.y = new_pos.y - this.tileHeight;
+            this.ground_layer.addChild(obstacle);
+
+            this.walls[key] = obstacle;
+        })
 
         // create the closing boundary
         this.boundary_layer = new PIXI.Container();
@@ -315,16 +330,11 @@ class Game {
         delete this.bullets[key];
     }
 
-    destroyWall(event) {
-        let position = event.data.position;
-        // convert continuous to grid space coords
-        let {x, y} = this.toGridCoords(position[0], position[1]);
-
-        if (this.destructables[y][x] !== undefined) {
-            console.log("destroying wall at", {x, y}, event);
-            this.ground_layer.removeChild(this.destructables[y][x]);
-        } else {
-            console.log("cannot destroy null wall", event);
+    destroyWall(wallId) {
+        if (wallId in this.walls) {
+            this.walls[wallId].destroy();
+            this.ground_layer.removeChild(this.walls[wallId]);
+            delete this.walls[wallId];
         }
     }
 
@@ -349,7 +359,8 @@ class Game {
             
             // Initialise stuff if needed
             if (!this.mapInitialised) {
-                if (this.gameInfo.mapInfo !== null) {
+                let first_timestep_data = this.gameInfo.getTimestepData(0);
+                if ((this.gameInfo.mapInfo !== null) && (first_timestep_data !== null)) {
                     this.initMap();
                 }
                 return;
@@ -436,19 +447,14 @@ class Game {
                     this.updateClosingBoundary(vertices);
                 }
 
-
-                // events
-                // this.gameInfo.getTimestepData(newIndex).events.forEach((e) => {
-
-                //     if (e.event_type == "BULLET_DESTROYED") {
-                //         this.destroyBullet(e.data.id);
-                //     } else if (e.event_type == "WALL_DESTROYED") {
-                //         this.destroyWall(e);
-                //     }
-
-
-                // })
-
+                // delete objects
+                this.gameInfo.getTimestepData(newIndex).deleted_objects.forEach((objId) => {
+                    if (objId.indexOf("bullet") != -1) {
+                        this.destroyBullet(objId);
+                    } else if (objId.indexOf("wall") != -1) {
+                        this.destroyWall(objId);
+                    }
+                })
 
             }
         });
