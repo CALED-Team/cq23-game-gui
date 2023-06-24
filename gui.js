@@ -49,6 +49,7 @@ class Game {
         this.app = new PIXI.Application(dimensions);
         this.main_div.appendChild(this.app.view);
 
+        this.playing = true;
 
         this.tick = 0;
         this.elapsed = 0;
@@ -62,6 +63,9 @@ class Game {
         this.initPlayback();
     }
 
+    togglePlayPause() {
+        this.playing = this.playing ? false : true;
+    }
 
     reset() {
         console.log("reset() called");
@@ -69,11 +73,17 @@ class Game {
         this.tick = 0;
         this.mapInitialised = false;
         this.tanksInitialised = false;
+        this.updateStatus();
     }
 
     initControls() {
         this.controlsDiv = document.createElement("div")
         this.main_div.appendChild(this.controlsDiv);
+
+        let playPauseButton = document.createElement("button");
+        playPauseButton.innerText = "Play/Pause";
+        playPauseButton.addEventListener("click", this.togglePlayPause.bind(this));
+        this.controlsDiv.appendChild(playPauseButton);
 
         let resetButton = document.createElement("button");
         resetButton.innerText = "Reset";
@@ -90,10 +100,9 @@ class Game {
     updateStatus() {
         if (this.gameInfo.finished) {
             let _max = this.gameInfo.organisedData.length;
-            this.statusDiv.innerHTML = `<label for=\"file\">Downloading progress:</label><progress id=\"file\" value=\"${this.tick}\" max=\"${_max}\">${this.tick}</progress>`;
+            this.statusDiv.innerHTML = `<label for=\"file\">Tick: ${this.tick}/${_max} </label><progress id=\"file\" value=\"${this.tick}\" max=\"${_max}\">${this.tick}</progress>`;
         } else {
-            this.statusDiv.innerHTML = `<label for=\"file\">Downloading progress:</label><progress id=\"file\" value=\"${this.tick}\" max=\"1000\">${this.tick}</progress>`;
-            this.statusDiv.innerHTML += `not finished yet`;
+            this.statusDiv.innerHTML = `<label for=\"file\">Tick: ${this.tick}/${1000} </label><progress id=\"file\" value=\"${this.tick}\" max=\"1000\">${this.tick}</progress>`;
         }
     }
 
@@ -132,20 +141,6 @@ class Game {
                 floor.x = j * this.tileWidth;
                 floor.y = i * this.tileHeight;
                 this.ground_layer.addChild(floor);
-
-                // if (this.map[i][j] in additionalMap) {
-                //     const obstacle = new PIXI.Sprite(
-                //         additionalMap[this.map[i][j]]
-                //     );
-                //     obstacle.width = this.tileWidth;
-                //     obstacle.height = this.tileHeight;
-                //     obstacle.anchor.set(0, 0);
-                //     obstacle.x = j * this.tileWidth;
-                //     obstacle.y = i * this.tileHeight;
-                //     this.ground_layer.addChild(obstacle);
-
-                //     this.destructables[i][j] = obstacle;
-                // }
             }
         }
 
@@ -377,6 +372,10 @@ class Game {
                 return;
             }
             
+            if (!this.playing) {
+                return;
+            }
+
             const currentIndex = this.elapsed / 2;
             const prevIndex = Math.floor(currentIndex);
             const newIndex = Math.ceil(currentIndex);
