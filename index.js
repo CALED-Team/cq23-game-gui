@@ -63,6 +63,20 @@ class GameInfo {
                 ) {
                     return;
                 }
+
+                if (this.organisedData.length > 0) {
+                    // include the info that has not changed from the previous timestep
+                    Object.entries(this.organisedData[this.organisedData.length - 1].updated_objects).forEach(([key, val]) => {
+                        if (key in line.updated_objects) {
+                            return;
+                        } else if (key in this.objectDeletedAt) {
+                            return;
+                        } else {
+                            line.updated_objects[key] = val;
+                        }
+                    })
+                }
+
                 this.organisedData.push(line);
 
                 if ("deleted_objects" in line) {

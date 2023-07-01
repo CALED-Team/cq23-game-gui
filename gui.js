@@ -67,6 +67,7 @@ class Game {
 
         this.initControls();
         this.initStatus();
+        this.initTeamStatus();
         this.initPlayback();
     }
 
@@ -94,6 +95,7 @@ class Game {
             this.tanksInitialised = false;
         }
         this.updateStatus();
+        this.updateTeamStatus();
     }
 
     initControls() {
@@ -126,6 +128,41 @@ class Game {
         }
     }
 
+    initTeamStatus() {
+        this.teamStatusDiv = document.createElement("div");
+        this.main_div.appendChild(this.teamStatusDiv);
+
+        this.teamOneStatusDiv = document.createElement("div");
+        this.teamStatusDiv.appendChild(this.teamOneStatusDiv);
+        this.teamTwoStatusDiv = document.createElement("div");
+        this.teamStatusDiv.appendChild(this.teamTwoStatusDiv);
+
+        this.updateTeamStatus();
+    }
+
+    updateTeamStatus() {
+        // client info
+        if (this.gameInfo.clientInfo == null) {
+            return;
+        }
+        this.teamOneStatusDiv.innerHTML = `<span>Team 1: ${this.gameInfo.clientInfo[0].name}</span><br>`;
+        this.teamTwoStatusDiv.innerHTML = `<span>Team 2: ${this.gameInfo.clientInfo[1].name}</span><br>`;
+        // colour of tank
+
+        // game progress info
+        let current_data = this.gameInfo.getTimestepData(this.tick);
+        if (current_data == null) {
+            return;
+        }
+
+        let tank1 = current_data.updated_objects["tank-1"];
+        this.teamOneStatusDiv.innerHTML += `<span>hp: ${tank1.hp}</span><br>`;
+        this.teamOneStatusDiv.innerHTML += `<span>powerups: ${tank1.powerups}</span><br>`;
+
+        let tank2 = current_data.updated_objects["tank-2"];
+        this.teamTwoStatusDiv.innerHTML += `<span>hp: ${tank2.hp}</span><br>`;
+        this.teamTwoStatusDiv.innerHTML += `<span>powerups: ${tank2.powerups}</span><br>`;
+    }
 
     initMap() {
         this.mapInitialised = true;
@@ -426,6 +463,7 @@ class Game {
 
             this.tick = newIndex;
             this.updateStatus();
+            this.updateTeamStatus();
             
             if (this.gameInfo.getTimestepData(newIndex) === null) {
                 // Stop Updating
