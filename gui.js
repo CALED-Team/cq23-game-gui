@@ -231,7 +231,7 @@ class Game {
                 `PNG/Homemade/storm.png`
             )
         );
-        top.height = 10;
+        top.height = 0;
         top.width = this.width;
         top.x = 0;
         top.y = 0;
@@ -244,35 +244,35 @@ class Game {
                 `PNG/Homemade/storm.png`
             )
         );
-        bottom.height = 10;
+        bottom.height = 0;
         bottom.width = this.width;
         bottom.x = 0;
-        bottom.y = this.height - 10;
+        bottom.y = this.height - 0;
         this.boundary_layer.addChild(bottom);
         this.closing_boundary.bottom = bottom;
 
-        // top boundary
+        // left boundary
         let left = new PIXI.Sprite(
             PIXI.Texture.from(
                 `PNG/Homemade/storm.png`
             )
         );
         left.height = this.height;
-        left.width = 10;
+        left.width = 0;
         left.x = 0;
         left.y = 0;
         this.boundary_layer.addChild(left);
         this.closing_boundary.left = left;
 
-        // top boundary
+        // right boundary
         let right = new PIXI.Sprite(
             PIXI.Texture.from(
                 `PNG/Homemade/storm.png`
             )
         );
         right.height = this.height;
-        right.width = 10;
-        right.x = this.width - 10;
+        right.width = 0;
+        right.x = this.width - 0;
         right.y = 0;
         this.boundary_layer.addChild(right);
         this.closing_boundary.right = right;
