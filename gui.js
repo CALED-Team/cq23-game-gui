@@ -446,15 +446,19 @@ class Game {
                     this.updateClosingBoundary(vertices);
                 }
 
-                // delete objects
-                this.gameInfo.getTimestepData(newIndex).deleted_objects.forEach((objId) => {
-                    if (objId.indexOf("bullet") != -1) {
-                        this.destroyBullet(objId);
-                    } else if (objId.indexOf("wall") != -1) {
-                        this.destroyWall(objId);
+                // deleting objects
+                // for all current bullets
+                Object.keys(this.bullets).forEach((key) => {
+                    if ((key in this.gameInfo.objectDeletedAt) && (newIndex + 1 >= this.gameInfo.objectDeletedAt[key])) {
+                        this.destroyBullet(key);
                     }
                 })
-
+                // for all current obstacles
+                Object.keys(this.walls).forEach((key) => {
+                    if ((key in this.gameInfo.objectDeletedAt) && (newIndex + 1 >= this.gameInfo.objectDeletedAt[key])) {
+                        this.destroyWall(key);
+                    }
+                })
             }
         });
     }
