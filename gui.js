@@ -7,6 +7,7 @@ const CONSTANTS = {
     tankHeight: 20,
     gridScaling: 20,
     bulletRadius: 5,
+    powerupRadius: 15
 };
 
 COLOURS = ["Blue", "Green", "Red", "Beige"];
@@ -31,6 +32,12 @@ const bulletTextures = {
     Red: PIXI.Texture.from("PNG/Bullets/bulletRedSilver_outline.png"),
     Beige: PIXI.Texture.from("PNG/Bullets/bulletBlueSilver_outline.png"),
 };
+
+const powerupTextures = {
+    HEALTH: PIXI.Texture.from("PNG/Tmp/health.png"),
+    DAMAGE: PIXI.Texture.from("PNG/Tmp/damage.png"),
+    SPEED: PIXI.Texture.from("PNG/Tmp/speed.png")
+}
 
 class Game {
     constructor(divId, gameInfo, dimensions) {
@@ -240,6 +247,7 @@ class Game {
 
         this.tanks = {};
         this.bullets = {};
+        this.powerups = {};
 
         this.moving_layer = new PIXI.Container();
         this.app.stage.addChild(this.moving_layer);
@@ -336,6 +344,29 @@ class Game {
         this.moving_layer.removeChild(this.bullets[key]);
         this.bullets[key].destroy();
         delete this.bullets[key];
+    }
+
+    spawnPowerup(key, obj) {
+        let powerup = new PIXI.Sprite(powerupTextures[obj.powerup_type]);
+        powerup.anchor.set(0.5, 0.5);
+        powerup.height = CONSTANTS.powerupRadius * this.unitHeight * 2;
+        powerup.width = CONSTANTS.powerupRadius * this.unitWidth * 2;
+        let [x, y] = obj.position;
+        let {x2, y2} = this.continuousToCanvasCoords(x, y);
+        powerup.x = x2;
+        powerup.y = y2;
+        this.moving_layer.addChild(powerup);
+        this.powerups[key] = powerup;
+        return powerup;
+    }
+
+    destroyPowerup(key) {
+        if (!this.powerups.hasOwnProperty(key)) {
+            return;
+        }
+        this.moving_layer.removeChild(this.powerups[key]);
+        this.powerups[key].destroy();
+        delete this.powerups[key];
     }
 
     destroyWall(wallId) {
@@ -449,6 +480,24 @@ class Game {
                 });
 
 
+                // powerups
+                let powerups = Object.entries(
+                    this.gameInfo.getTimestepData(newIndex).updated_objects
+                ).filter(([k, _]) => k.indexOf("powerup") != -1);
+
+                powerups.forEach(([key, objData]) => {
+                    if (this.powerups.hasOwnProperty(key)) {
+                        // update bullet position
+                        let {x, y} = this.continuousToCanvasCoords(objData.position[0], objData.position[1]);
+                        this.powerups[key].x = x;
+                        this.powerups[key].y = y;
+                    } else {
+                        this.spawnPowerup(key, objData);
+                    }
+                });
+
+
+
                 // boundaries
                 let boundaries = Object.entries(
                     this.gameInfo.getTimestepData(newIndex).updated_objects
@@ -464,6 +513,12 @@ class Game {
                 Object.keys(this.bullets).forEach((key) => {
                     if ((key in this.gameInfo.objectDeletedAt) && (newIndex >= this.gameInfo.objectDeletedAt[key])) {
                         this.destroyBullet(key);
+                    }
+                })
+                // for all current powerups
+                Object.keys(this.powerups).forEach((key) => {
+                    if ((key in this.gameInfo.objectDeletedAt) && (newIndex >= this.gameInfo.objectDeletedAt[key])) {
+                        this.destroyPowerup(key);
                     }
                 })
                 // for all current obstacles
