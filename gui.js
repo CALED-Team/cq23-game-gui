@@ -1,7 +1,3 @@
-class Map {
-    constructor() {}
-}
-
 const CONSTANTS = {
     tankWidth: 20,
     tankHeight: 20,
@@ -9,6 +5,8 @@ const CONSTANTS = {
     bulletRadius: 5,
     powerupRadius: 15
 };
+
+const TIME_FACTOR = 2;
 
 COLOURS = ["Blue", "Green", "Red", "Beige"];
 
@@ -63,6 +61,7 @@ class Game {
 
         this.tick = 0;
         this.elapsed = 0;
+        this.need_to_update_graphics = false;
 
 
         this.mapInitialised = false;
@@ -76,6 +75,26 @@ class Game {
 
     togglePlayPause() {
         this.playing = this.playing ? false : true;
+    }
+
+    forward() {
+        this.playing = false;
+        this.tick += 1;
+        this.elapsed += TIME_FACTOR;
+        this.updateStatus();
+        this.updateTeamStatus();
+        this.need_to_update_graphics = true;
+    }
+
+    backward() {
+        this.playing = false;
+        if (this.tick > 0) {
+            this.tick -= 1;
+            this.elapsed -= TIME_FACTOR;
+        }
+        this.updateStatus();
+        this.updateTeamStatus();
+        this.need_to_update_graphics = true;
     }
 
     reset() {
@@ -106,6 +125,11 @@ class Game {
         this.controlsDiv.classList.add("controls");
         this.outer_controls_div.appendChild(this.controlsDiv);
 
+        let backwardButton = document.createElement("button");
+        backwardButton.innerText = "Backward";
+        backwardButton.addEventListener("click", this.backward.bind(this));
+        this.controlsDiv.appendChild(backwardButton);
+
         let playPauseButton = document.createElement("button");
         playPauseButton.innerText = "Play/Pause";
         playPauseButton.addEventListener("click", this.togglePlayPause.bind(this));
@@ -115,6 +139,11 @@ class Game {
         resetButton.innerText = "Reset";
         resetButton.addEventListener("click", this.reset.bind(this));
         this.controlsDiv.appendChild(resetButton);
+
+        let forwardButton = document.createElement("button");
+        forwardButton.innerText = "Forward";
+        forwardButton.addEventListener("click", this.forward.bind(this));
+        this.controlsDiv.appendChild(forwardButton);
     }
 
     initStatus() {
@@ -437,7 +466,6 @@ class Game {
         this.app.ticker.add((delta) => {
 
             // console.log(this.tick, this.elapsed);
-
             
             // Initialise stuff if needed
             if (!this.mapInitialised) {
@@ -459,11 +487,11 @@ class Game {
                 return;
             }
             
-            if (!this.playing) {
+            if (!this.playing && !this.need_to_update_graphics) {
                 return;
             }
 
-            const currentIndex = this.elapsed / 2;
+            const currentIndex = this.elapsed / TIME_FACTOR;
             const prevIndex = Math.floor(currentIndex);
             const newIndex = Math.ceil(currentIndex);
 
@@ -572,6 +600,8 @@ class Game {
                     }
                 })
             }
+            
+            this.need_to_update_graphics = false;
         });
     }
 }
