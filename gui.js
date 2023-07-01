@@ -71,8 +71,21 @@ class Game {
         console.log("reset() called");
         this.elapsed = 0;
         this.tick = 0;
-        this.mapInitialised = false;
-        this.tanksInitialised = false;
+        if (this.mapInitialised) {
+            this.app.stage.removeChild(this.ground_layer);
+            this.ground_layer.destroy();
+            this.ground_layer = null;
+            this.app.stage.removeChild(this.boundary_layer);
+            this.boundary_layer.destroy();
+            this.boundary_layer = null;
+            this.mapInitialised = false;
+        }
+        if (this.tanksInitialised) {
+            this.app.stage.removeChild(this.moving_layer);
+            this.moving_layer.destroy();
+            this.moving_layer = null;
+            this.tanksInitialised = false;
+        }
         this.updateStatus();
     }
 
@@ -449,13 +462,13 @@ class Game {
                 // deleting objects
                 // for all current bullets
                 Object.keys(this.bullets).forEach((key) => {
-                    if ((key in this.gameInfo.objectDeletedAt) && (newIndex + 1 >= this.gameInfo.objectDeletedAt[key])) {
+                    if ((key in this.gameInfo.objectDeletedAt) && (newIndex >= this.gameInfo.objectDeletedAt[key])) {
                         this.destroyBullet(key);
                     }
                 })
                 // for all current obstacles
                 Object.keys(this.walls).forEach((key) => {
-                    if ((key in this.gameInfo.objectDeletedAt) && (newIndex + 1 >= this.gameInfo.objectDeletedAt[key])) {
+                    if ((key in this.gameInfo.objectDeletedAt) && (newIndex >= this.gameInfo.objectDeletedAt[key])) {
                         this.destroyWall(key);
                     }
                 })
