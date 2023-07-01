@@ -55,6 +55,9 @@ class Game {
 
         this.app = new PIXI.Application(dimensions);
         this.main_div.appendChild(this.app.view);
+        this.outer_controls_div = document.createElement("div");
+        this.outer_controls_div.classList.add("controls");
+        this.main_div.appendChild(this.outer_controls_div);
 
         this.playing = true;
 
@@ -100,7 +103,8 @@ class Game {
 
     initControls() {
         this.controlsDiv = document.createElement("div")
-        this.main_div.appendChild(this.controlsDiv);
+        this.controlsDiv.classList.add("controls");
+        this.outer_controls_div.appendChild(this.controlsDiv);
 
         let playPauseButton = document.createElement("button");
         playPauseButton.innerText = "Play/Pause";
@@ -115,7 +119,8 @@ class Game {
 
     initStatus() {
         this.statusDiv = document.createElement("div")
-        this.main_div.appendChild(this.statusDiv);
+        this.statusDiv.classList.add("status");
+        this.outer_controls_div.appendChild(this.statusDiv);
         this.updateStatus();
     }
 
@@ -130,6 +135,7 @@ class Game {
 
     initTeamStatus() {
         this.teamStatusDiv = document.createElement("div");
+        this.teamStatusDiv.classList.add("teams");
         this.main_div.appendChild(this.teamStatusDiv);
 
         this.teamOneStatusDiv = document.createElement("div");
