@@ -8,6 +8,7 @@ class GameInfo {
         this.rawData = {};
         this.organisedData = [];
         this.objectDeletedAt = {};
+        this.objectCreatedAt = {};
         this.attempts = {};
 
         this.finished = false;
@@ -79,6 +80,13 @@ class GameInfo {
 
                 this.organisedData.push(line);
 
+
+                Object.entries(line.updated_objects).forEach(([key, val]) => {
+                    if (!(key in this.objectCreatedAt)) {
+                        this.objectCreatedAt[key] = this.organisedData.length;
+                    }
+                })
+                
                 if ("deleted_objects" in line) {
                     line.deleted_objects.forEach((key) => {
                         this.objectDeletedAt[key] = this.organisedData.length;
@@ -87,6 +95,7 @@ class GameInfo {
             }
         });
         console.log(this.objectDeletedAt);
+        console.log(this.objectCreatedAt);
     }
 
     _updateInfo() {

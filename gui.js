@@ -504,8 +504,10 @@ class Game {
                 return;
             }
             
-            this.elapsed += delta;
-            this.tick += 1;
+            if (!this.need_to_update_graphics) {
+                this.elapsed += delta;
+                this.tick += 1;
+            }
 
             // console.log(curPosition, newPosition);
 
@@ -586,16 +588,25 @@ class Game {
                     if ((key in this.gameInfo.objectDeletedAt) && (newIndex >= this.gameInfo.objectDeletedAt[key])) {
                         this.destroyBullet(key);
                     }
+                    if ((key in this.gameInfo.objectCreatedAt) && (newIndex < this.gameInfo.objectCreatedAt[key])) {
+                        this.destroyBullet(key);
+                    }
                 })
                 // for all current powerups
                 Object.keys(this.powerups).forEach((key) => {
                     if ((key in this.gameInfo.objectDeletedAt) && (newIndex >= this.gameInfo.objectDeletedAt[key])) {
                         this.destroyPowerup(key);
                     }
+                    if ((key in this.gameInfo.objectCreatedAt) && (newIndex < this.gameInfo.objectCreatedAt[key])) {
+                        this.destroyPowerup(key);
+                    }
                 })
                 // for all current obstacles
                 Object.keys(this.walls).forEach((key) => {
                     if ((key in this.gameInfo.objectDeletedAt) && (newIndex >= this.gameInfo.objectDeletedAt[key])) {
+                        this.destroyWall(key);
+                    }
+                    if ((key in this.gameInfo.objectCreatedAt) && (newIndex < this.gameInfo.objectCreatedAt[key])) {
                         this.destroyWall(key);
                     }
                 })
