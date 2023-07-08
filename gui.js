@@ -66,6 +66,7 @@ class Game {
 
         this.mapInitialised = false;
         this.tanksInitialised = false;
+        this.teamStatusInitialised = false;
 
         this.initControls();
         this.initStatus();
@@ -167,9 +168,9 @@ class Game {
         this.teamStatusDiv.classList.add("teams");
         this.main_div.appendChild(this.teamStatusDiv);
 
-        this.teamOneStatusDiv = document.createElement("div");
-        this.teamStatusDiv.appendChild(this.teamOneStatusDiv);
+        this.teamOneStatusDiv = document.createElement("div");        
         this.teamTwoStatusDiv = document.createElement("div");
+        this.teamStatusDiv.appendChild(this.teamOneStatusDiv);
         this.teamStatusDiv.appendChild(this.teamTwoStatusDiv);
 
         this.updateTeamStatus();
@@ -180,8 +181,22 @@ class Game {
         if (this.gameInfo.clientInfo == null) {
             return;
         }
-        this.teamOneStatusDiv.innerHTML = `<span>Team 1: ${this.gameInfo.clientInfo[0].name}</span><br>`;
-        this.teamTwoStatusDiv.innerHTML = `<span>Team 2: ${this.gameInfo.clientInfo[1].name}</span><br>`;
+
+        // initial setup
+        if (!this.teamStatusInitialised) {
+            this.teamOneStatusDiv.innerHTML += `<div><img src="PNG/Tanks/tank${COLOURS[0]}_outline.png"/><span>Team 1</span><span>${this.gameInfo.clientInfo[0].name}</span></div>`;
+            this.teamTwoStatusDiv.innerHTML += `<div><img src="PNG/Tanks/tank${COLOURS[1]}_outline.png"/><span>Team 2</span><span>${this.gameInfo.clientInfo[1].name}</span></div>`;
+
+            this.teamOneInnerStatusDiv = document.createElement("div");        
+            this.teamTwoInnerStatusDiv = document.createElement("div");
+            this.teamOneStatusDiv.appendChild(this.teamOneInnerStatusDiv);
+            this.teamTwoStatusDiv.appendChild(this.teamTwoInnerStatusDiv);
+
+            this.teamStatusInitialised = true;
+        }
+
+        this.teamOneInnerStatusDiv.innerHTML = "";
+        this.teamTwoInnerStatusDiv.innerHTML = "";
         // colour of tank
 
         // game progress info
@@ -204,12 +219,12 @@ class Game {
         }
 
         let tank1 = current_data.updated_objects["tank-1"];
-        this.teamOneStatusDiv.innerHTML += `<span>hp: ${tank1.hp}</span><br>`;
-        this.teamOneStatusDiv.innerHTML += `<span>powerups: ${tank1.powerups}</span><br>`;
+        this.teamOneInnerStatusDiv.innerHTML += `<span>hp: ${tank1.hp}</span><br>`;
+        this.teamOneInnerStatusDiv.innerHTML += `<span>powerups: ${tank1.powerups}</span><br>`;
 
         let tank2 = current_data.updated_objects["tank-2"];
-        this.teamTwoStatusDiv.innerHTML += `<span>hp: ${tank2.hp}</span><br>`;
-        this.teamTwoStatusDiv.innerHTML += `<span>powerups: ${tank2.powerups}</span><br>`;
+        this.teamTwoInnerStatusDiv.innerHTML += `<span>hp: ${tank2.hp}</span><br>`;
+        this.teamTwoInnerStatusDiv.innerHTML += `<span>powerups: ${tank2.powerups}</span><br>`;
     }
 
     initMap() {
