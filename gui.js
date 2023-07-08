@@ -8,7 +8,7 @@ const CONSTANTS = {
 
 const TIME_FACTOR = 2;
 
-COLOURS = ["Blue", "Green", "Red", "Beige"];
+COLOURS = ["Blue", "Red", "Green", "Beige"];
 
 const floorMap = {
     ".": PIXI.Texture.from("PNG/Environment/dirt.png"),
@@ -315,8 +315,6 @@ class Game {
 
     initTanks() {
         this.tanksInitialised = true;
-        let tankIndex = 0;
-
         this.tanks = {};
         this.bullets = {};
         this.powerups = {};
@@ -332,6 +330,8 @@ class Game {
                 if (key.indexOf("tank") == -1) {
                     return;
                 }
+
+                let tankIndex = parseInt(key[5]) - 1;
 
                 const tankContainer = new PIXI.Container();
                 const tankBase = new PIXI.Sprite(
@@ -511,106 +511,100 @@ class Game {
 
             // console.log(curPosition, newPosition);
 
-            if (prevIndex == newIndex) {
-                const curSpots = this.gameInfo.getTimestepData(prevIndex)["updated_objects"];
-                Object.keys(curSpots).forEach((key) => {
-                    if (!this.tanks.hasOwnProperty(key)) return;
-                    const position = curSpots[key]["position"];
-                    let {x, y} = this.continuousToCanvasCoords(position[0], position[1]);
-                    this.tanks[key].container.x = x;
-                    this.tanks[key].container.y = y;
-                });
-            } else {
-                const nextSpots = this.gameInfo.getTimestepData(newIndex)["updated_objects"];
-                Object.keys(nextSpots).forEach((key) => {
-                    if (!this.tanks.hasOwnProperty(key)) return;
-                    const new_pos = nextSpots[key]["position"];
-                    let {x, y} = this.continuousToCanvasCoords(new_pos[0], new_pos[1]);
-                    this.tanks[key].container.x = x;
-                    this.tanks[key].container.y = y;
-                });
+            // if (true && (prevIndex == newIndex)) {
+            //     const curSpots = this.gameInfo.getTimestepData(prevIndex)["updated_objects"];
+            //     Object.keys(curSpots).forEach((key) => {
+            //         if (!this.tanks.hasOwnProperty(key)) return;
+            //         const position = curSpots[key]["position"];
+            //         let {x, y} = this.continuousToCanvasCoords(position[0], position[1]);
+            //         this.tanks[key].container.x = x;
+            //         this.tanks[key].container.y = y;
+            //     });
+            const nextSpots = this.gameInfo.getTimestepData(prevIndex)["updated_objects"];
+            Object.keys(nextSpots).forEach((key) => {
+                if (!this.tanks.hasOwnProperty(key)) return;
+                const new_pos = nextSpots[key]["position"];
+                let {x, y} = this.continuousToCanvasCoords(new_pos[0], new_pos[1]);
+                this.tanks[key].container.x = x;
+                this.tanks[key].container.y = y;
+            });
 
-                // bullet stuff
-                let bullets = Object.entries(
-                    this.gameInfo.getTimestepData(newIndex).updated_objects
-                ).filter(([k, _]) => k.indexOf("bullet") != -1);
+            // bullet stuff
+            let bullets = Object.entries(
+                this.gameInfo.getTimestepData(prevIndex).updated_objects
+            ).filter(([k, _]) => k.indexOf("bullet") != -1);
 
-                bullets.forEach(([key, objData]) => {
-                    if (this.bullets.hasOwnProperty(key)) {
-                        // update bullet position
-                        let {x, y} = this.continuousToCanvasCoords(objData.position[0], objData.position[1]);
-                        this.bullets[key].x = x;
-                        this.bullets[key].y = y;
-                    } else {
-                        // spawn bullet at position
-                        this.spawnBullet(
-                            objData.position[0],
-                            objData.position[1],
-                            0,
-                            COLOURS[0],
-                            key
-                        );
-                    }
-                });
-
-
-                // powerups
-                let powerups = Object.entries(
-                    this.gameInfo.getTimestepData(newIndex).updated_objects
-                ).filter(([k, _]) => k.indexOf("powerup") != -1);
-
-                powerups.forEach(([key, objData]) => {
-                    if (this.powerups.hasOwnProperty(key)) {
-                        // update bullet position
-                        let {x, y} = this.continuousToCanvasCoords(objData.position[0], objData.position[1]);
-                        this.powerups[key].x = x;
-                        this.powerups[key].y = y;
-                    } else {
-                        this.spawnPowerup(key, objData);
-                    }
-                });
-
-
-
-                // boundaries
-                let boundaries = Object.entries(
-                    this.gameInfo.getTimestepData(newIndex).updated_objects
-                ).filter(([k, _]) => k.indexOf("closing_boundary") != -1);
-                if (boundaries.length === 1) {
-                    let b = boundaries[0];
-                    let vertices = b[1].position;
-                    this.updateClosingBoundary(vertices);
+            bullets.forEach(([key, objData]) => {
+                if (this.bullets.hasOwnProperty(key)) {
+                    // update bullet position
+                    let {x, y} = this.continuousToCanvasCoords(objData.position[0], objData.position[1]);
+                    this.bullets[key].x = x;
+                    this.bullets[key].y = y;
+                } else {
+                    // spawn bullet at position
+                    this.spawnBullet(
+                        objData.position[0],
+                        objData.position[1],
+                        0,
+                        COLOURS[0],
+                        key
+                    );
                 }
+            });
 
-                // deleting objects
-                // for all current bullets
-                Object.keys(this.bullets).forEach((key) => {
-                    if ((key in this.gameInfo.objectDeletedAt) && (newIndex >= this.gameInfo.objectDeletedAt[key])) {
-                        this.destroyBullet(key);
-                    }
-                    if ((key in this.gameInfo.objectCreatedAt) && (newIndex < this.gameInfo.objectCreatedAt[key])) {
-                        this.destroyBullet(key);
-                    }
-                })
-                // for all current powerups
-                Object.keys(this.powerups).forEach((key) => {
-                    if ((key in this.gameInfo.objectDeletedAt) && (newIndex >= this.gameInfo.objectDeletedAt[key])) {
-                        this.destroyPowerup(key);
-                    }
-                    if ((key in this.gameInfo.objectCreatedAt) && (newIndex < this.gameInfo.objectCreatedAt[key])) {
-                        this.destroyPowerup(key);
-                    }
-                })
-                // for all current obstacles
-                Object.keys(this.walls).forEach((key) => {
-                    if ((key in this.gameInfo.objectDeletedAt) && (newIndex >= this.gameInfo.objectDeletedAt[key])) {
-                        this.destroyWall(key);
-                    }
-                    if ((key in this.gameInfo.objectCreatedAt) && (newIndex < this.gameInfo.objectCreatedAt[key])) {
-                        this.destroyWall(key);
-                    }
-                })
+
+            // powerups
+            let powerups = Object.entries(
+                this.gameInfo.getTimestepData(prevIndex).updated_objects
+            ).filter(([k, _]) => k.indexOf("powerup") != -1);
+
+            powerups.forEach(([key, objData]) => {
+                if (this.powerups.hasOwnProperty(key)) {
+                    // update bullet position
+                    let {x, y} = this.continuousToCanvasCoords(objData.position[0], objData.position[1]);
+                    this.powerups[key].x = x;
+                    this.powerups[key].y = y;
+                } else {
+                    this.spawnPowerup(key, objData);
+                }
+            });
+
+
+            // boundaries
+            let boundaries = Object.entries(
+                this.gameInfo.getTimestepData(prevIndex).updated_objects
+            ).filter(([k, _]) => k.indexOf("closing_boundary") != -1);
+            if (boundaries.length === 1) {
+                let b = boundaries[0];
+                let vertices = b[1].position;
+                this.updateClosingBoundary(vertices);
             }
+
+            // deleting objects
+            // for all current bullets
+            Object.keys(this.bullets).forEach((key) => {
+                if ((key in this.gameInfo.objectDeletedAt) && (prevIndex >= this.gameInfo.objectDeletedAt[key])) {
+                    this.destroyBullet(key);
+                }
+                if ((key in this.gameInfo.objectCreatedAt) && (prevIndex < this.gameInfo.objectCreatedAt[key])) {
+                    this.destroyBullet(key);
+                }
+            })
+            // for all current powerups
+            Object.keys(this.powerups).forEach((key) => {
+                if ((key in this.gameInfo.objectDeletedAt) && (prevIndex >= this.gameInfo.objectDeletedAt[key])) {
+                    this.destroyPowerup(key);
+                }
+                if ((key in this.gameInfo.objectCreatedAt) && (prevIndex < this.gameInfo.objectCreatedAt[key])) {
+                    this.destroyPowerup(key);
+                }
+            })
+            // for all current obstacles
+            Object.keys(this.walls).forEach((key) => {
+                if ((key in this.gameInfo.objectDeletedAt) && (prevIndex >= this.gameInfo.objectDeletedAt[key])) {
+                    this.destroyWall(key);
+                }
+            })
             
             this.need_to_update_graphics = false;
         });
