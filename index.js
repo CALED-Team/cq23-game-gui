@@ -12,6 +12,8 @@ class GameInfo {
         this.attempts = {};
 
         this.finished = false;
+        this.winners = [];
+        this.losers = [];
 
         this.mapInfo = null;
         this.clientInfo = null;
@@ -52,6 +54,12 @@ class GameInfo {
 
         lines.forEach((line) => {
             if ("victor" in line || "vanquished" in line) {
+                if ("victor" in line) {
+                    this.winners = line.victor;
+                }
+                if ("vanquished" in line) {
+                    this.losers = line.vanquished;
+                }
                 this._finishPolling();
             } else if ("map" in line) {
                 this.mapInfo = line.map;

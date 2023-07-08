@@ -187,6 +187,19 @@ class Game {
         // game progress info
         let current_data = this.gameInfo.getTimestepData(this.tick);
         if (current_data == null) {
+
+            if (this.gameInfo.finished) {
+                // display result info
+                this.gameInfo.winners.forEach((key) => {
+                    if (key == "1") {
+                        this.teamOneStatusDiv.classList.add("winner");
+                    }
+                    if (key == "2") {
+                        this.teamTwoStatusDiv.classList.add("winner");
+                    }
+                })
+            }
+
             return;
         }
 
