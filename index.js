@@ -102,8 +102,6 @@ class GameInfo {
                 }
             }
         });
-        console.log(this.objectDeletedAt);
-        console.log(this.objectCreatedAt);
     }
 
     _updateInfo() {

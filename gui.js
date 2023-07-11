@@ -99,7 +99,6 @@ class Game {
     }
 
     reset() {
-        console.log("reset() called");
         this.elapsed = 0;
         this.tick = 0;
         if (this.mapInitialised) {
@@ -351,7 +350,6 @@ class Game {
         this.app.stage.addChild(this.moving_layer);
 
         let first_timestep_data = this.gameInfo.getTimestepData(0);
-        console.log(first_timestep_data);
 
         Object.entries(first_timestep_data.updated_objects).forEach(
             ([key, objData]) => {
@@ -509,7 +507,6 @@ class Game {
             if (!this.tanksInitialised) {
                 let first_timestep_data = this.gameInfo.getTimestepData(0);
                 if (first_timestep_data !== null) {
-                    console.log("init tanks called")
                     this.initTanks();
                 }
                 return;
