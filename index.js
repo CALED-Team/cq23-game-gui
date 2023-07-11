@@ -7,9 +7,13 @@ class GameInfo {
 
         this.rawData = {};
         this.organisedData = [];
+        this.objectDeletedAt = {};
+        this.objectCreatedAt = {};
         this.attempts = {};
 
         this.finished = false;
+        this.winners = [];
+        this.losers = [];
 
         this.mapInfo = null;
         this.clientInfo = null;
@@ -50,6 +54,12 @@ class GameInfo {
 
         lines.forEach((line) => {
             if ("victor" in line || "vanquished" in line) {
+                if ("victor" in line) {
+                    this.winners = line.victor;
+                }
+                if ("vanquished" in line) {
+                    this.losers = line.vanquished;
+                }
                 this._finishPolling();
             } else if ("map" in line) {
                 this.mapInfo = line.map;
@@ -62,7 +72,34 @@ class GameInfo {
                 ) {
                     return;
                 }
+
+                if (this.organisedData.length > 0) {
+                    // include the info that has not changed from the previous timestep
+                    Object.entries(this.organisedData[this.organisedData.length - 1].updated_objects).forEach(([key, val]) => {
+                        if (key in line.updated_objects) {
+                            return;
+                        } else if (key in this.objectDeletedAt) {
+                            return;
+                        } else {
+                            line.updated_objects[key] = val;
+                        }
+                    })
+                }
+
                 this.organisedData.push(line);
+
+
+                Object.entries(line.updated_objects).forEach(([key, val]) => {
+                    if (!(key in this.objectCreatedAt)) {
+                        this.objectCreatedAt[key] = this.organisedData.length;
+                    }
+                })
+                
+                if ("deleted_objects" in line) {
+                    line.deleted_objects.forEach((key) => {
+                        this.objectDeletedAt[key] = this.organisedData.length;
+                    })
+                }
             }
         });
     }

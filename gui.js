@@ -1,15 +1,14 @@
-class Map {
-    constructor() {}
-}
-
 const CONSTANTS = {
     tankWidth: 20,
     tankHeight: 20,
     gridScaling: 20,
     bulletRadius: 5,
+    powerupRadius: 15
 };
 
-COLOURS = ["Blue", "Green", "Red", "Beige"];
+const TIME_FACTOR = 2;
+
+COLOURS = ["Blue", "Red", "Green", "Beige"];
 
 const floorMap = {
     ".": PIXI.Texture.from("PNG/Environment/dirt.png"),
@@ -32,6 +31,12 @@ const bulletTextures = {
     Beige: PIXI.Texture.from("PNG/Bullets/bulletBlueSilver_outline.png"),
 };
 
+const powerupTextures = {
+    HEALTH: PIXI.Texture.from("PNG/Tmp/health.png"),
+    DAMAGE: PIXI.Texture.from("PNG/Tmp/damage.png"),
+    SPEED: PIXI.Texture.from("PNG/Tmp/speed.png")
+}
+
 class Game {
     constructor(divId, gameInfo, dimensions) {
         this.main_div = document.getElementById(divId);
@@ -48,11 +53,177 @@ class Game {
 
         this.app = new PIXI.Application(dimensions);
         this.main_div.appendChild(this.app.view);
+        this.outer_controls_div = document.createElement("div");
+        this.outer_controls_div.classList.add("controls");
+        this.main_div.appendChild(this.outer_controls_div);
+
+        this.playing = true;
+
+        this.tick = 0;
+        this.elapsed = 0;
+        this.need_to_update_graphics = false;
+
 
         this.mapInitialised = false;
         this.tanksInitialised = false;
+        this.teamStatusInitialised = false;
 
+        this.initControls();
+        this.initStatus();
+        this.initTeamStatus();
         this.initPlayback();
+    }
+
+    togglePlayPause() {
+        this.playing = this.playing ? false : true;
+    }
+
+    forward() {
+        this.playing = false;
+        this.tick += 1;
+        this.elapsed += TIME_FACTOR;
+        this.updateStatus();
+        this.updateTeamStatus();
+        this.need_to_update_graphics = true;
+    }
+
+    backward() {
+        this.playing = false;
+        if (this.tick > 0) {
+            this.tick -= 1;
+            this.elapsed -= TIME_FACTOR;
+        }
+        this.updateStatus();
+        this.updateTeamStatus();
+        this.need_to_update_graphics = true;
+    }
+
+    reset() {
+        this.elapsed = 0;
+        this.tick = 0;
+        if (this.mapInitialised) {
+            this.app.stage.removeChild(this.ground_layer);
+            this.ground_layer.destroy();
+            this.ground_layer = null;
+            this.app.stage.removeChild(this.boundary_layer);
+            this.boundary_layer.destroy();
+            this.boundary_layer = null;
+            this.mapInitialised = false;
+        }
+        if (this.tanksInitialised) {
+            this.app.stage.removeChild(this.moving_layer);
+            this.moving_layer.destroy();
+            this.moving_layer = null;
+            this.tanksInitialised = false;
+        }
+        this.updateStatus();
+        this.updateTeamStatus();
+    }
+
+    initControls() {
+        this.controlsDiv = document.createElement("div")
+        this.controlsDiv.classList.add("controls");
+        this.outer_controls_div.appendChild(this.controlsDiv);
+
+        let backwardButton = document.createElement("button");
+        backwardButton.innerText = "Backward";
+        backwardButton.addEventListener("click", this.backward.bind(this));
+        this.controlsDiv.appendChild(backwardButton);
+
+        let playPauseButton = document.createElement("button");
+        playPauseButton.innerText = "Play/Pause";
+        playPauseButton.addEventListener("click", this.togglePlayPause.bind(this));
+        this.controlsDiv.appendChild(playPauseButton);
+
+        let resetButton = document.createElement("button");
+        resetButton.innerText = "Reset";
+        resetButton.addEventListener("click", this.reset.bind(this));
+        this.controlsDiv.appendChild(resetButton);
+
+        let forwardButton = document.createElement("button");
+        forwardButton.innerText = "Forward";
+        forwardButton.addEventListener("click", this.forward.bind(this));
+        this.controlsDiv.appendChild(forwardButton);
+    }
+
+    initStatus() {
+        this.statusDiv = document.createElement("div")
+        this.statusDiv.classList.add("status");
+        this.outer_controls_div.appendChild(this.statusDiv);
+        this.updateStatus();
+    }
+
+    updateStatus() {
+        if (this.gameInfo.finished) {
+            let _max = this.gameInfo.organisedData.length;
+            this.statusDiv.innerHTML = `<label for=\"file\">Tick: ${this.tick}/${_max} </label><progress id=\"file\" value=\"${this.tick}\" max=\"${_max}\">${this.tick}</progress>`;
+        } else {
+            this.statusDiv.innerHTML = `<label for=\"file\">Tick: ${this.tick}/${1000} </label><progress id=\"file\" value=\"${this.tick}\" max=\"1000\">${this.tick}</progress>`;
+        }
+    }
+
+    initTeamStatus() {
+        this.teamStatusDiv = document.createElement("div");
+        this.teamStatusDiv.classList.add("teams");
+        this.main_div.appendChild(this.teamStatusDiv);
+
+        this.teamOneStatusDiv = document.createElement("div");        
+        this.teamTwoStatusDiv = document.createElement("div");
+        this.teamStatusDiv.appendChild(this.teamOneStatusDiv);
+        this.teamStatusDiv.appendChild(this.teamTwoStatusDiv);
+
+        this.updateTeamStatus();
+    }
+
+    updateTeamStatus() {
+        // client info
+        if (this.gameInfo.clientInfo == null) {
+            return;
+        }
+
+        // initial setup
+        if (!this.teamStatusInitialised) {
+            this.teamOneStatusDiv.innerHTML += `<div><img src="PNG/Tanks/tank${COLOURS[0]}_outline.png"/><span>Team 1</span><span>${this.gameInfo.clientInfo[0].name}</span></div>`;
+            this.teamTwoStatusDiv.innerHTML += `<div><img src="PNG/Tanks/tank${COLOURS[1]}_outline.png"/><span>Team 2</span><span>${this.gameInfo.clientInfo[1].name}</span></div>`;
+
+            this.teamOneInnerStatusDiv = document.createElement("div");        
+            this.teamTwoInnerStatusDiv = document.createElement("div");
+            this.teamOneStatusDiv.appendChild(this.teamOneInnerStatusDiv);
+            this.teamTwoStatusDiv.appendChild(this.teamTwoInnerStatusDiv);
+
+            this.teamStatusInitialised = true;
+        }
+
+        this.teamOneInnerStatusDiv.innerHTML = "";
+        this.teamTwoInnerStatusDiv.innerHTML = "";
+        // colour of tank
+
+        // game progress info
+        let current_data = this.gameInfo.getTimestepData(this.tick);
+        if (current_data == null) {
+
+            if (this.gameInfo.finished) {
+                // display result info
+                this.gameInfo.winners.forEach((key) => {
+                    if (key == "1") {
+                        this.teamOneStatusDiv.classList.add("winner");
+                    }
+                    if (key == "2") {
+                        this.teamTwoStatusDiv.classList.add("winner");
+                    }
+                })
+            }
+
+            return;
+        }
+
+        let tank1 = current_data.updated_objects["tank-1"];
+        this.teamOneInnerStatusDiv.innerHTML += `<span>hp: ${tank1.hp}</span><br>`;
+        this.teamOneInnerStatusDiv.innerHTML += `<span>powerups: ${tank1.powerups}</span><br>`;
+
+        let tank2 = current_data.updated_objects["tank-2"];
+        this.teamTwoInnerStatusDiv.innerHTML += `<span>hp: ${tank2.hp}</span><br>`;
+        this.teamTwoInnerStatusDiv.innerHTML += `<span>powerups: ${tank2.powerups}</span><br>`;
     }
 
     initMap() {
@@ -78,10 +249,7 @@ class Game {
         gridMap = gridMap.map((l) => l.replace("\n", ""));
         this.map = gridMap;
 
-        this.destructables = Array.from(
-            Array(this.rows),
-            () => new Array(this.cols)
-        );
+        this.walls = {};
 
         for (let i = 0; i < this.rows; i++) {
             for (let j = 0; j < this.cols; j++) {
@@ -92,22 +260,26 @@ class Game {
                 floor.x = j * this.tileWidth;
                 floor.y = i * this.tileHeight;
                 this.ground_layer.addChild(floor);
-
-                if (this.map[i][j] in additionalMap) {
-                    const obstacle = new PIXI.Sprite(
-                        additionalMap[this.map[i][j]]
-                    );
-                    obstacle.width = this.tileWidth;
-                    obstacle.height = this.tileHeight;
-                    obstacle.anchor.set(0, 0);
-                    obstacle.x = j * this.tileWidth;
-                    obstacle.y = i * this.tileHeight;
-                    this.ground_layer.addChild(obstacle);
-
-                    this.destructables[i][j] = obstacle;
-                }
             }
         }
+
+        Object.entries(this.gameInfo.getTimestepData(0).updated_objects).filter(([key, _]) => key.indexOf("wall") !== -1).forEach(([key, obj]) => {
+            const obstacle = new PIXI.Sprite(
+                obj.type === 4 ? PIXI.Texture.from("PNG/Obstacles/barrelGrey_up.png") : PIXI.Texture.from("PNG/Obstacles/sandbagBeige.png")
+            );
+            obstacle.width = this.tileWidth;
+            obstacle.height = this.tileHeight;
+            obstacle.anchor.set(0, 0);
+
+            let [x, y] = obj.position;
+            let new_pos = this.continuousToCanvasCoords(x, y);
+
+            obstacle.x = new_pos.x;
+            obstacle.y = new_pos.y - this.tileHeight;
+            this.ground_layer.addChild(obstacle);
+
+            this.walls[key] = obstacle;
+        })
 
         // create the closing boundary
         this.boundary_layer = new PIXI.Container();
@@ -121,7 +293,7 @@ class Game {
                 `PNG/Homemade/storm.png`
             )
         );
-        top.height = 10;
+        top.height = 0;
         top.width = this.width;
         top.x = 0;
         top.y = 0;
@@ -134,35 +306,35 @@ class Game {
                 `PNG/Homemade/storm.png`
             )
         );
-        bottom.height = 10;
+        bottom.height = 0;
         bottom.width = this.width;
         bottom.x = 0;
-        bottom.y = this.height - 10;
+        bottom.y = this.height - 0;
         this.boundary_layer.addChild(bottom);
         this.closing_boundary.bottom = bottom;
 
-        // top boundary
+        // left boundary
         let left = new PIXI.Sprite(
             PIXI.Texture.from(
                 `PNG/Homemade/storm.png`
             )
         );
         left.height = this.height;
-        left.width = 10;
+        left.width = 0;
         left.x = 0;
         left.y = 0;
         this.boundary_layer.addChild(left);
         this.closing_boundary.left = left;
 
-        // top boundary
+        // right boundary
         let right = new PIXI.Sprite(
             PIXI.Texture.from(
                 `PNG/Homemade/storm.png`
             )
         );
         right.height = this.height;
-        right.width = 10;
-        right.x = this.width - 10;
+        right.width = 0;
+        right.x = this.width - 0;
         right.y = 0;
         this.boundary_layer.addChild(right);
         this.closing_boundary.right = right;
@@ -170,22 +342,22 @@ class Game {
 
     initTanks() {
         this.tanksInitialised = true;
-        let tankIndex = 0;
-
         this.tanks = {};
         this.bullets = {};
+        this.powerups = {};
 
         this.moving_layer = new PIXI.Container();
         this.app.stage.addChild(this.moving_layer);
 
         let first_timestep_data = this.gameInfo.getTimestepData(0);
-        console.log(first_timestep_data);
 
         Object.entries(first_timestep_data.updated_objects).forEach(
             ([key, objData]) => {
                 if (key.indexOf("tank") == -1) {
                     return;
                 }
+
+                let tankIndex = parseInt(key[5]) - 1;
 
                 const tankContainer = new PIXI.Container();
                 const tankBase = new PIXI.Sprite(
@@ -272,16 +444,34 @@ class Game {
         delete this.bullets[key];
     }
 
-    destroyWall(event) {
-        let position = event.data.position;
-        // convert continuous to grid space coords
-        let {x, y} = this.toGridCoords(position[0], position[1]);
+    spawnPowerup(key, obj) {
+        let powerup = new PIXI.Sprite(powerupTextures[obj.powerup_type]);
+        powerup.anchor.set(0.5, 0.5);
+        powerup.height = CONSTANTS.powerupRadius * this.unitHeight * 2;
+        powerup.width = CONSTANTS.powerupRadius * this.unitWidth * 2;
+        let [x, y] = obj.position;
+        let {x2, y2} = this.continuousToCanvasCoords(x, y);
+        powerup.x = x2;
+        powerup.y = y2;
+        this.moving_layer.addChild(powerup);
+        this.powerups[key] = powerup;
+        return powerup;
+    }
 
-        if (this.destructables[y][x] !== undefined) {
-            console.log("destroying wall at", {x, y}, event);
-            this.ground_layer.removeChild(this.destructables[y][x]);
-        } else {
-            console.log("cannot destroy null wall", event);
+    destroyPowerup(key) {
+        if (!this.powerups.hasOwnProperty(key)) {
+            return;
+        }
+        this.moving_layer.removeChild(this.powerups[key]);
+        this.powerups[key].destroy();
+        delete this.powerups[key];
+    }
+
+    destroyWall(wallId) {
+        if (wallId in this.walls) {
+            this.walls[wallId].destroy();
+            this.ground_layer.removeChild(this.walls[wallId]);
+            delete this.walls[wallId];
         }
     }
 
@@ -298,113 +488,150 @@ class Game {
     }
 
     initPlayback() {
-        let elapsed = 0.0;
-        let iteration = 0;
 
         this.app.ticker.add((delta) => {
 
-
+            // console.log(this.tick, this.elapsed);
+            
             // Initialise stuff if needed
             if (!this.mapInitialised) {
-                if (this.gameInfo.mapInfo !== null) {
+                let first_timestep_data = this.gameInfo.getTimestepData(0);
+                if ((this.gameInfo.mapInfo !== null) && (first_timestep_data !== null)) {
                     this.initMap();
                 }
                 return;
             }
-
+            
             // TODO: initialise client info
-
+            
             if (!this.tanksInitialised) {
                 let first_timestep_data = this.gameInfo.getTimestepData(0);
                 if (first_timestep_data !== null) {
-                    console.log("init tanks called")
                     this.initTanks();
                 }
                 return;
             }
             
-            const currentIndex = elapsed / 2;
+            if (!this.playing && !this.need_to_update_graphics) {
+                return;
+            }
+
+            const currentIndex = this.elapsed / TIME_FACTOR;
             const prevIndex = Math.floor(currentIndex);
             const newIndex = Math.ceil(currentIndex);
+
+            this.tick = newIndex;
+            this.updateStatus();
+            this.updateTeamStatus();
             
             if (this.gameInfo.getTimestepData(newIndex) === null) {
                 // Stop Updating
                 return;
             }
             
-            elapsed += delta;
-            iteration += 1;
+            if (!this.need_to_update_graphics) {
+                this.elapsed += delta;
+                this.tick += 1;
+            }
 
             // console.log(curPosition, newPosition);
 
-            if (prevIndex == newIndex) {
-                const curSpots = this.gameInfo.getTimestepData(prevIndex)["updated_objects"];
-                Object.keys(curSpots).forEach((key) => {
-                    if (!this.tanks.hasOwnProperty(key)) return;
-                    const position = curSpots[key]["position"];
-                    let {x, y} = this.continuousToCanvasCoords(position[0], position[1]);
-                    this.tanks[key].container.x = x;
-                    this.tanks[key].container.y = y;
-                });
-            } else {
-                const nextSpots = this.gameInfo.getTimestepData(newIndex)["updated_objects"];
-                Object.keys(nextSpots).forEach((key) => {
-                    if (!this.tanks.hasOwnProperty(key)) return;
-                    const new_pos = nextSpots[key]["position"];
-                    let {x, y} = this.continuousToCanvasCoords(new_pos[0], new_pos[1]);
-                    this.tanks[key].container.x = x;
-                    this.tanks[key].container.y = y;
-                });
+            // if (true && (prevIndex == newIndex)) {
+            //     const curSpots = this.gameInfo.getTimestepData(prevIndex)["updated_objects"];
+            //     Object.keys(curSpots).forEach((key) => {
+            //         if (!this.tanks.hasOwnProperty(key)) return;
+            //         const position = curSpots[key]["position"];
+            //         let {x, y} = this.continuousToCanvasCoords(position[0], position[1]);
+            //         this.tanks[key].container.x = x;
+            //         this.tanks[key].container.y = y;
+            //     });
+            const nextSpots = this.gameInfo.getTimestepData(prevIndex)["updated_objects"];
+            Object.keys(nextSpots).forEach((key) => {
+                if (!this.tanks.hasOwnProperty(key)) return;
+                const new_pos = nextSpots[key]["position"];
+                let {x, y} = this.continuousToCanvasCoords(new_pos[0], new_pos[1]);
+                this.tanks[key].container.x = x;
+                this.tanks[key].container.y = y;
+            });
 
-                // bullet stuff
-                let bullets = Object.entries(
-                    this.gameInfo.getTimestepData(newIndex).updated_objects
-                ).filter(([k, _]) => k.indexOf("bullet") != -1);
+            // bullet stuff
+            let bullets = Object.entries(
+                this.gameInfo.getTimestepData(prevIndex).updated_objects
+            ).filter(([k, _]) => k.indexOf("bullet") != -1);
 
-                bullets.forEach(([key, objData]) => {
-                    if (this.bullets.hasOwnProperty(key)) {
-                        // update bullet position
-                        let {x, y} = this.continuousToCanvasCoords(objData.position[0], objData.position[1]);
-                        this.bullets[key].x = x;
-                        this.bullets[key].y = y;
-                    } else {
-                        // spawn bullet at position
-                        this.spawnBullet(
-                            objData.position[0],
-                            objData.position[1],
-                            0,
-                            COLOURS[0],
-                            key
-                        );
-                    }
-                });
-
-
-                // boundaries
-                let boundaries = Object.entries(
-                    this.gameInfo.getTimestepData(newIndex).updated_objects
-                ).filter(([k, _]) => k.indexOf("closing_boundary") != -1);
-                if (boundaries.length === 1) {
-                    let b = boundaries[0];
-                    let vertices = b[1].position;
-                    this.updateClosingBoundary(vertices);
+            bullets.forEach(([key, objData]) => {
+                if (this.bullets.hasOwnProperty(key)) {
+                    // update bullet position
+                    let {x, y} = this.continuousToCanvasCoords(objData.position[0], objData.position[1]);
+                    this.bullets[key].x = x;
+                    this.bullets[key].y = y;
+                } else {
+                    // spawn bullet at position
+                    this.spawnBullet(
+                        objData.position[0],
+                        objData.position[1],
+                        0,
+                        COLOURS[0],
+                        key
+                    );
                 }
+            });
 
 
-                // events
-                // this.gameInfo.getTimestepData(newIndex).events.forEach((e) => {
+            // powerups
+            let powerups = Object.entries(
+                this.gameInfo.getTimestepData(prevIndex).updated_objects
+            ).filter(([k, _]) => k.indexOf("powerup") != -1);
 
-                //     if (e.event_type == "BULLET_DESTROYED") {
-                //         this.destroyBullet(e.data.id);
-                //     } else if (e.event_type == "WALL_DESTROYED") {
-                //         this.destroyWall(e);
-                //     }
+            powerups.forEach(([key, objData]) => {
+                if (this.powerups.hasOwnProperty(key)) {
+                    // update bullet position
+                    let {x, y} = this.continuousToCanvasCoords(objData.position[0], objData.position[1]);
+                    this.powerups[key].x = x;
+                    this.powerups[key].y = y;
+                } else {
+                    this.spawnPowerup(key, objData);
+                }
+            });
 
 
-                // })
-
-
+            // boundaries
+            let boundaries = Object.entries(
+                this.gameInfo.getTimestepData(prevIndex).updated_objects
+            ).filter(([k, _]) => k.indexOf("closing_boundary") != -1);
+            if (boundaries.length === 1) {
+                let b = boundaries[0];
+                let vertices = b[1].position;
+                this.updateClosingBoundary(vertices);
             }
+
+            // deleting objects
+            // for all current bullets
+            Object.keys(this.bullets).forEach((key) => {
+                if ((key in this.gameInfo.objectDeletedAt) && (prevIndex >= this.gameInfo.objectDeletedAt[key])) {
+                    this.destroyBullet(key);
+                }
+                if ((key in this.gameInfo.objectCreatedAt) && (prevIndex < this.gameInfo.objectCreatedAt[key])) {
+                    this.destroyBullet(key);
+                }
+            })
+            // for all current powerups
+            Object.keys(this.powerups).forEach((key) => {
+                if ((key in this.gameInfo.objectDeletedAt) && (prevIndex >= this.gameInfo.objectDeletedAt[key])) {
+                    this.destroyPowerup(key);
+                }
+                if ((key in this.gameInfo.objectCreatedAt) && (prevIndex < this.gameInfo.objectCreatedAt[key])) {
+                    this.destroyPowerup(key);
+                }
+            })
+            // for all current obstacles
+            Object.keys(this.walls).forEach((key) => {
+                if ((key in this.gameInfo.objectDeletedAt) && (prevIndex >= this.gameInfo.objectDeletedAt[key])) {
+                    this.destroyWall(key);
+                }
+            })
+            
+            this.need_to_update_graphics = false;
         });
     }
 }
