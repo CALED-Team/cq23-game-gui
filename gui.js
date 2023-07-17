@@ -3,10 +3,50 @@ const CONSTANTS = {
     tankHeight: 20,
     gridScaling: 20,
     bulletRadius: 5,
-    powerupRadius: 15
+    powerupRadius: 15,
+    tankBarrelWidth: 7,
+    tankBarrelHeight: 20,
 };
 
 const TIME_FACTOR = 2;
+
+class CustomPIXIContainer extends PIXI.Container {
+    _anchorX = 0;
+    _anchorY = 0;
+
+    set anchorX(value) {
+        this._anchorX = value;
+        this.pivot.x = (value * this.width) / this.scale.x;
+    }
+
+    get anchorX() {
+        return this._anchorX;
+    }
+
+    set anchorY(value) {
+        this._anchorY = value;
+        this.pivot.y = (value * this.height) / this.scale.y;
+    }
+
+    get anchorY() {
+        return this._anchorY;
+    }
+}
+
+function get_angle(dx, dy) {
+    if (dx == 0) {
+        if (dy > 0) {
+            return 90;
+        } else {
+            return 270;
+        }
+    }
+
+    var theta = Math.atan2(dy, dx); // range (-PI, PI]
+    theta *= 180 / Math.PI; // rads to degs, range (-180, 180]
+    if (theta < 0) theta = 360 + theta; // range [0, 360)
+    return theta;
+}
 
 COLOURS = ["Blue", "Red", "Green", "Beige"];
 
@@ -34,8 +74,8 @@ const bulletTextures = {
 const powerupTextures = {
     HEALTH: PIXI.Texture.from("PNG/Tmp/health.png"),
     DAMAGE: PIXI.Texture.from("PNG/Tmp/damage.png"),
-    SPEED: PIXI.Texture.from("PNG/Tmp/speed.png")
-}
+    SPEED: PIXI.Texture.from("PNG/Tmp/speed.png"),
+};
 
 class Game {
     constructor(divId, gameInfo, dimensions) {
@@ -62,7 +102,6 @@ class Game {
         this.tick = 0;
         this.elapsed = 0;
         this.need_to_update_graphics = false;
-
 
         this.mapInitialised = false;
         this.tanksInitialised = false;
@@ -121,7 +160,7 @@ class Game {
     }
 
     initControls() {
-        this.controlsDiv = document.createElement("div")
+        this.controlsDiv = document.createElement("div");
         this.controlsDiv.classList.add("controls");
         this.outer_controls_div.appendChild(this.controlsDiv);
 
@@ -132,7 +171,10 @@ class Game {
 
         let playPauseButton = document.createElement("button");
         playPauseButton.innerText = "Play/Pause";
-        playPauseButton.addEventListener("click", this.togglePlayPause.bind(this));
+        playPauseButton.addEventListener(
+            "click",
+            this.togglePlayPause.bind(this)
+        );
         this.controlsDiv.appendChild(playPauseButton);
 
         let resetButton = document.createElement("button");
@@ -147,7 +189,7 @@ class Game {
     }
 
     initStatus() {
-        this.statusDiv = document.createElement("div")
+        this.statusDiv = document.createElement("div");
         this.statusDiv.classList.add("status");
         this.outer_controls_div.appendChild(this.statusDiv);
         this.updateStatus();
@@ -158,7 +200,11 @@ class Game {
             let _max = this.gameInfo.organisedData.length;
             this.statusDiv.innerHTML = `<label for=\"file\">Tick: ${this.tick}/${_max} </label><progress id=\"file\" value=\"${this.tick}\" max=\"${_max}\">${this.tick}</progress>`;
         } else {
-            this.statusDiv.innerHTML = `<label for=\"file\">Tick: ${this.tick}/${1000} </label><progress id=\"file\" value=\"${this.tick}\" max=\"1000\">${this.tick}</progress>`;
+            this.statusDiv.innerHTML = `<label for=\"file\">Tick: ${
+                this.tick
+            }/${1000} </label><progress id=\"file\" value=\"${
+                this.tick
+            }\" max=\"1000\">${this.tick}</progress>`;
         }
     }
 
@@ -167,7 +213,7 @@ class Game {
         this.teamStatusDiv.classList.add("teams");
         this.main_div.appendChild(this.teamStatusDiv);
 
-        this.teamOneStatusDiv = document.createElement("div");        
+        this.teamOneStatusDiv = document.createElement("div");
         this.teamTwoStatusDiv = document.createElement("div");
         this.teamStatusDiv.appendChild(this.teamOneStatusDiv);
         this.teamStatusDiv.appendChild(this.teamTwoStatusDiv);
@@ -186,7 +232,7 @@ class Game {
             this.teamOneStatusDiv.innerHTML += `<div><img src="PNG/Tanks/tank${COLOURS[0]}_outline.png"/><span>Team 1</span><span>${this.gameInfo.clientInfo[0].name}</span></div>`;
             this.teamTwoStatusDiv.innerHTML += `<div><img src="PNG/Tanks/tank${COLOURS[1]}_outline.png"/><span>Team 2</span><span>${this.gameInfo.clientInfo[1].name}</span></div>`;
 
-            this.teamOneInnerStatusDiv = document.createElement("div");        
+            this.teamOneInnerStatusDiv = document.createElement("div");
             this.teamTwoInnerStatusDiv = document.createElement("div");
             this.teamOneStatusDiv.appendChild(this.teamOneInnerStatusDiv);
             this.teamTwoStatusDiv.appendChild(this.teamTwoInnerStatusDiv);
@@ -201,7 +247,6 @@ class Game {
         // game progress info
         let current_data = this.gameInfo.getTimestepData(this.tick);
         if (current_data == null) {
-
             if (this.gameInfo.finished) {
                 // display result info
                 this.gameInfo.winners.forEach((key) => {
@@ -211,7 +256,7 @@ class Game {
                     if (key == "2") {
                         this.teamTwoStatusDiv.classList.add("winner");
                     }
-                })
+                });
             }
 
             return;
@@ -263,36 +308,36 @@ class Game {
             }
         }
 
-        Object.entries(this.gameInfo.getTimestepData(0).updated_objects).filter(([key, _]) => key.indexOf("wall") !== -1).forEach(([key, obj]) => {
-            const obstacle = new PIXI.Sprite(
-                obj.type === 4 ? PIXI.Texture.from("PNG/Obstacles/barrelGrey_up.png") : PIXI.Texture.from("PNG/Obstacles/sandbagBeige.png")
-            );
-            obstacle.width = this.tileWidth;
-            obstacle.height = this.tileHeight;
-            obstacle.anchor.set(0, 0);
+        Object.entries(this.gameInfo.getTimestepData(0).updated_objects)
+            .filter(([key, _]) => key.indexOf("wall") !== -1)
+            .forEach(([key, obj]) => {
+                const obstacle = new PIXI.Sprite(
+                    obj.type === 4
+                        ? PIXI.Texture.from("PNG/Obstacles/barrelGrey_up.png")
+                        : PIXI.Texture.from("PNG/Obstacles/sandbagBeige.png")
+                );
+                obstacle.width = this.tileWidth;
+                obstacle.height = this.tileHeight;
+                obstacle.anchor.set(0, 0);
 
-            let [x, y] = obj.position;
-            let new_pos = this.continuousToCanvasCoords(x, y);
+                let [x, y] = obj.position;
+                let new_pos = this.continuousToCanvasCoords(x, y);
 
-            obstacle.x = new_pos.x;
-            obstacle.y = new_pos.y - this.tileHeight;
-            this.ground_layer.addChild(obstacle);
+                obstacle.x = new_pos.x;
+                obstacle.y = new_pos.y - this.tileHeight;
+                this.ground_layer.addChild(obstacle);
 
-            this.walls[key] = obstacle;
-        })
+                this.walls[key] = obstacle;
+            });
 
         // create the closing boundary
         this.boundary_layer = new PIXI.Container();
         this.app.stage.addChild(this.boundary_layer);
 
-        this.closing_boundary = {}
+        this.closing_boundary = {};
 
         // top boundary
-        let top = new PIXI.Sprite(
-            PIXI.Texture.from(
-                `PNG/Homemade/storm.png`
-            )
-        );
+        let top = new PIXI.Sprite(PIXI.Texture.from(`PNG/Homemade/storm.png`));
         top.height = 0;
         top.width = this.width;
         top.x = 0;
@@ -302,9 +347,7 @@ class Game {
 
         // bottom boundary
         let bottom = new PIXI.Sprite(
-            PIXI.Texture.from(
-                `PNG/Homemade/storm.png`
-            )
+            PIXI.Texture.from(`PNG/Homemade/storm.png`)
         );
         bottom.height = 0;
         bottom.width = this.width;
@@ -314,11 +357,7 @@ class Game {
         this.closing_boundary.bottom = bottom;
 
         // left boundary
-        let left = new PIXI.Sprite(
-            PIXI.Texture.from(
-                `PNG/Homemade/storm.png`
-            )
-        );
+        let left = new PIXI.Sprite(PIXI.Texture.from(`PNG/Homemade/storm.png`));
         left.height = this.height;
         left.width = 0;
         left.x = 0;
@@ -328,9 +367,7 @@ class Game {
 
         // right boundary
         let right = new PIXI.Sprite(
-            PIXI.Texture.from(
-                `PNG/Homemade/storm.png`
-            )
+            PIXI.Texture.from(`PNG/Homemade/storm.png`)
         );
         right.height = this.height;
         right.width = 0;
@@ -358,41 +395,41 @@ class Game {
                 }
 
                 let tankIndex = parseInt(key[5]) - 1;
+                let position = objData.position;
 
-                const tankContainer = new PIXI.Container();
+                const tankContainer = new CustomPIXIContainer();
+                tankContainer.width = this.unitWidth * CONSTANTS.tankWidth;
+                tankContainer.height = this.unitHeight * CONSTANTS.tankHeight;
+                tankContainer.anchorX = 0.5;
+                tankContainer.anchorY = 0.5;
+                tankContainer.x = position[0];
+                tankContainer.y = position[1];
+
                 const tankBase = new PIXI.Sprite(
                     PIXI.Texture.from(
                         `PNG/Tanks/tank${COLOURS[tankIndex]}_outline.png`
                     )
                 );
-                tankBase.width = this.tileWidth;
-                tankBase.height = this.tileHeight;
+                tankBase.width = this.unitWidth * CONSTANTS.tankWidth;
+                tankBase.height = this.unitHeight * CONSTANTS.tankHeight;
+                tankBase.anchor.set(0.5, 0.5);
+                tankBase.x = tankContainer.width / 2;
+                tankBase.y = tankContainer.height / 2;
+
                 const tankBarrel = new PIXI.Sprite(
                     PIXI.Texture.from(
                         `PNG/Tanks/barrel${COLOURS[tankIndex]}_outline.png`
                     )
                 );
-                // Set anchor to top middle of barrel
+                tankBarrel.width = this.unitWidth * CONSTANTS.tankBarrelWidth;
+                tankBarrel.height =
+                    this.unitHeight * CONSTANTS.tankBarrelHeight;
                 tankBarrel.anchor.set(0.5, 0.2);
-                // Move anchor to center.
-                tankBarrel.x = this.tileWidth / 2;
-                tankBarrel.y = this.tileHeight / 2;
-                tankBarrel.width = this.tileWidth / 5;
-                tankBarrel.height = this.tileHeight * 1.2;
+                tankBarrel.x = tankContainer.width / 2;
+                tankBarrel.y = tankContainer.height / 2;
 
                 tankContainer.addChild(tankBase);
                 tankContainer.addChild(tankBarrel);
-
-                tankContainer.width = this.tileWidth;
-                tankContainer.height = this.tileHeight;
-                // tankContainer.pivot.x = this.tileWidth / 2;
-                // tankContainer.pivot.y = this.tileHeight / 2;
-
-                let position = objData.position;
-                    
-                // tankContainer.anchor.set(0.5, 0.5)
-                tankContainer.x = position[0];
-                tankContainer.y = position[1];
 
                 this.tanks[key] = {
                     stable_x: position[0],
@@ -410,28 +447,43 @@ class Game {
     continuousToCanvasCoords(x, y) {
         return {
             x: (x / this.continuousWidth) * this.width,
-            y: this.height - (y / this.continuousHeight) * this.height
-        }
+            y: this.height - (y / this.continuousHeight) * this.height,
+        };
     }
 
     toGridCoords(x, y) {
         return {
             x: Math.floor(x / CONSTANTS.gridScaling),
             y: this.rows - Math.ceil(y / CONSTANTS.gridScaling) - 1,
-        }
+        };
     }
 
-    spawnBullet(x, y, rotation, colour, key) {
-        let bullet = new PIXI.Sprite(bulletTextures[colour]);
+    spawnBullet(key, obj) {
+        let bullet = new PIXI.Sprite(bulletTextures.Blue);
         bullet.anchor.set(0.5, 0.5);
         bullet.height = CONSTANTS.bulletRadius * this.unitHeight * 2;
         bullet.width = CONSTANTS.bulletRadius * this.unitWidth * 2;
-        bullet.rotation = rotation;
-        let {x2, y2} = this.continuousToCanvasCoords(x, y);
+        let [x, y] = obj.position;
+        let { x2, y2 } = this.continuousToCanvasCoords(x, y);
         bullet.x = x2;
         bullet.y = y2;
         this.moving_layer.addChild(bullet);
         this.bullets[key] = bullet;
+
+        // update the tank barrel position
+        let tank_id = obj.tank_id;
+        if (!(tank_id in this.tanks)) {
+            return;
+        }
+
+        let [vx, vy] = obj.velocity;
+
+        let angle = get_angle(vx, vy);
+
+        console.log(angle);
+
+        this.tanks[tank_id].barrel.angle = (630 - angle) % 360;
+
         return bullet;
     }
 
@@ -450,7 +502,7 @@ class Game {
         powerup.height = CONSTANTS.powerupRadius * this.unitHeight * 2;
         powerup.width = CONSTANTS.powerupRadius * this.unitWidth * 2;
         let [x, y] = obj.position;
-        let {x2, y2} = this.continuousToCanvasCoords(x, y);
+        let { x2, y2 } = this.continuousToCanvasCoords(x, y);
         powerup.x = x2;
         powerup.y = y2;
         this.moving_layer.addChild(powerup);
@@ -476,11 +528,17 @@ class Game {
     }
 
     updateClosingBoundary(vertices) {
-        let { x: x1, y: y1 } = this.continuousToCanvasCoords(vertices[0][0], vertices[0][1]);
+        let { x: x1, y: y1 } = this.continuousToCanvasCoords(
+            vertices[0][0],
+            vertices[0][1]
+        );
         this.closing_boundary.top.height = y1;
         this.closing_boundary.left.width = x1;
 
-        let { x: x2, y: y2 } = this.continuousToCanvasCoords(vertices[2][0], vertices[2][1]);
+        let { x: x2, y: y2 } = this.continuousToCanvasCoords(
+            vertices[2][0],
+            vertices[2][1]
+        );
         this.closing_boundary.bottom.height = this.height - y2;
         this.closing_boundary.bottom.y = y2;
         this.closing_boundary.right.width = this.width - x2;
@@ -488,22 +546,23 @@ class Game {
     }
 
     initPlayback() {
-
         this.app.ticker.add((delta) => {
-
             // console.log(this.tick, this.elapsed);
-            
+
             // Initialise stuff if needed
             if (!this.mapInitialised) {
                 let first_timestep_data = this.gameInfo.getTimestepData(0);
-                if ((this.gameInfo.mapInfo !== null) && (first_timestep_data !== null)) {
+                if (
+                    this.gameInfo.mapInfo !== null &&
+                    first_timestep_data !== null
+                ) {
                     this.initMap();
                 }
                 return;
             }
-            
+
             // TODO: initialise client info
-            
+
             if (!this.tanksInitialised) {
                 let first_timestep_data = this.gameInfo.getTimestepData(0);
                 if (first_timestep_data !== null) {
@@ -511,7 +570,7 @@ class Game {
                 }
                 return;
             }
-            
+
             if (!this.playing && !this.need_to_update_graphics) {
                 return;
             }
@@ -523,12 +582,12 @@ class Game {
             this.tick = newIndex;
             this.updateStatus();
             this.updateTeamStatus();
-            
+
             if (this.gameInfo.getTimestepData(newIndex) === null) {
                 // Stop Updating
                 return;
             }
-            
+
             if (!this.need_to_update_graphics) {
                 this.elapsed += delta;
                 this.tick += 1;
@@ -545,11 +604,17 @@ class Game {
             //         this.tanks[key].container.x = x;
             //         this.tanks[key].container.y = y;
             //     });
-            const nextSpots = this.gameInfo.getTimestepData(prevIndex)["updated_objects"];
+            const nextSpots =
+                this.gameInfo.getTimestepData(prevIndex)["updated_objects"];
             Object.keys(nextSpots).forEach((key) => {
                 if (!this.tanks.hasOwnProperty(key)) return;
                 const new_pos = nextSpots[key]["position"];
-                let {x, y} = this.continuousToCanvasCoords(new_pos[0], new_pos[1]);
+                this.tanks[key].stable_x = new_pos[0];
+                this.tanks[key].stable_y = new_pos[1];
+                let { x, y } = this.continuousToCanvasCoords(
+                    new_pos[0],
+                    new_pos[1]
+                );
                 this.tanks[key].container.x = x;
                 this.tanks[key].container.y = y;
             });
@@ -562,21 +627,17 @@ class Game {
             bullets.forEach(([key, objData]) => {
                 if (this.bullets.hasOwnProperty(key)) {
                     // update bullet position
-                    let {x, y} = this.continuousToCanvasCoords(objData.position[0], objData.position[1]);
+                    let { x, y } = this.continuousToCanvasCoords(
+                        objData.position[0],
+                        objData.position[1]
+                    );
                     this.bullets[key].x = x;
                     this.bullets[key].y = y;
                 } else {
                     // spawn bullet at position
-                    this.spawnBullet(
-                        objData.position[0],
-                        objData.position[1],
-                        0,
-                        COLOURS[0],
-                        key
-                    );
+                    this.spawnBullet(key, objData);
                 }
             });
-
 
             // powerups
             let powerups = Object.entries(
@@ -586,14 +647,16 @@ class Game {
             powerups.forEach(([key, objData]) => {
                 if (this.powerups.hasOwnProperty(key)) {
                     // update bullet position
-                    let {x, y} = this.continuousToCanvasCoords(objData.position[0], objData.position[1]);
+                    let { x, y } = this.continuousToCanvasCoords(
+                        objData.position[0],
+                        objData.position[1]
+                    );
                     this.powerups[key].x = x;
                     this.powerups[key].y = y;
                 } else {
                     this.spawnPowerup(key, objData);
                 }
             });
-
 
             // boundaries
             let boundaries = Object.entries(
@@ -608,29 +671,44 @@ class Game {
             // deleting objects
             // for all current bullets
             Object.keys(this.bullets).forEach((key) => {
-                if ((key in this.gameInfo.objectDeletedAt) && (prevIndex >= this.gameInfo.objectDeletedAt[key])) {
+                if (
+                    key in this.gameInfo.objectDeletedAt &&
+                    prevIndex >= this.gameInfo.objectDeletedAt[key]
+                ) {
                     this.destroyBullet(key);
                 }
-                if ((key in this.gameInfo.objectCreatedAt) && (prevIndex < this.gameInfo.objectCreatedAt[key])) {
+                if (
+                    key in this.gameInfo.objectCreatedAt &&
+                    prevIndex < this.gameInfo.objectCreatedAt[key]
+                ) {
                     this.destroyBullet(key);
                 }
-            })
+            });
             // for all current powerups
             Object.keys(this.powerups).forEach((key) => {
-                if ((key in this.gameInfo.objectDeletedAt) && (prevIndex >= this.gameInfo.objectDeletedAt[key])) {
+                if (
+                    key in this.gameInfo.objectDeletedAt &&
+                    prevIndex >= this.gameInfo.objectDeletedAt[key]
+                ) {
                     this.destroyPowerup(key);
                 }
-                if ((key in this.gameInfo.objectCreatedAt) && (prevIndex < this.gameInfo.objectCreatedAt[key])) {
+                if (
+                    key in this.gameInfo.objectCreatedAt &&
+                    prevIndex < this.gameInfo.objectCreatedAt[key]
+                ) {
                     this.destroyPowerup(key);
                 }
-            })
+            });
             // for all current obstacles
             Object.keys(this.walls).forEach((key) => {
-                if ((key in this.gameInfo.objectDeletedAt) && (prevIndex >= this.gameInfo.objectDeletedAt[key])) {
+                if (
+                    key in this.gameInfo.objectDeletedAt &&
+                    prevIndex >= this.gameInfo.objectDeletedAt[key]
+                ) {
                     this.destroyWall(key);
                 }
-            })
-            
+            });
+
             this.need_to_update_graphics = false;
         });
     }
