@@ -394,7 +394,8 @@ class Game {
                     return;
                 }
 
-                let tankIndex = parseInt(key.substring(5)) - 1 % COLOURS.length;
+                let tankIndex = parseInt(key.substring(5)) % COLOURS.length;
+                console.log(key, tankIndex);
                 let position = objData.position;
 
                 const tankContainer = new CustomPIXIContainer();
@@ -479,8 +480,6 @@ class Game {
         let [vx, vy] = obj.velocity;
 
         let angle = get_angle(vx, vy);
-
-        console.log(angle);
 
         this.tanks[tank_id].barrel.angle = (630 - angle) % 360;
 
