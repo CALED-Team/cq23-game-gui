@@ -262,11 +262,11 @@ class Game {
             return;
         }
 
-        let tank1 = current_data.updated_objects["tank-1"];
+        let tank1 = current_data.updated_objects[`tank-${this.gameInfo.clientInfo[0].id}`];
         this.teamOneInnerStatusDiv.innerHTML += `<span>hp: ${tank1.hp}</span><br>`;
         this.teamOneInnerStatusDiv.innerHTML += `<span>powerups: ${tank1.powerups}</span><br>`;
 
-        let tank2 = current_data.updated_objects["tank-2"];
+        let tank2 = current_data.updated_objects[`tank-${this.gameInfo.clientInfo[1].id}`];
         this.teamTwoInnerStatusDiv.innerHTML += `<span>hp: ${tank2.hp}</span><br>`;
         this.teamTwoInnerStatusDiv.innerHTML += `<span>powerups: ${tank2.powerups}</span><br>`;
     }
