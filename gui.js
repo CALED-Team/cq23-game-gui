@@ -229,8 +229,8 @@ class Game {
 
         // initial setup
         if (!this.teamStatusInitialised) {
-            this.teamOneStatusDiv.innerHTML += `<div><img src="PNG/Tanks/tank${COLOURS[0]}_outline.png"/><span>Team 1</span><span>${this.gameInfo.clientInfo[0].name}</span></div>`;
-            this.teamTwoStatusDiv.innerHTML += `<div><img src="PNG/Tanks/tank${COLOURS[1]}_outline.png"/><span>Team 2</span><span>${this.gameInfo.clientInfo[1].name}</span></div>`;
+            this.teamOneStatusDiv.innerHTML += `<div><img src="PNG/Tanks/tank${COLOURS[parseInt(this.gameInfo.clientInfo[0].id) % COLOURS.length]}_outline.png"/><span>Team 1</span><span>${this.gameInfo.clientInfo[0].name}</span></div>`;
+            this.teamTwoStatusDiv.innerHTML += `<div><img src="PNG/Tanks/tank${COLOURS[parseInt(this.gameInfo.clientInfo[1].id) % COLOURS.length]}_outline.png"/><span>Team 2</span><span>${this.gameInfo.clientInfo[1].name}</span></div>`;
 
             this.teamOneInnerStatusDiv = document.createElement("div");
             this.teamTwoInnerStatusDiv = document.createElement("div");
