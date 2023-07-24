@@ -250,10 +250,10 @@ class Game {
             if (this.gameInfo.finished) {
                 // display result info
                 this.gameInfo.winners.forEach((key) => {
-                    if (key == "1") {
+                    if (key == this.gameInfo.clientInfo[0].id) {
                         this.teamOneStatusDiv.classList.add("winner");
                     }
-                    if (key == "2") {
+                    if (key == this.gameInfo.clientInfo[1].id) {
                         this.teamTwoStatusDiv.classList.add("winner");
                     }
                 });
@@ -394,7 +394,7 @@ class Game {
                     return;
                 }
 
-                let tankIndex = parseInt(key[5]) - 1;
+                let tankIndex = parseInt(key[5]) - 1 % COLOURS.length;
                 let position = objData.position;
 
                 const tankContainer = new CustomPIXIContainer();
