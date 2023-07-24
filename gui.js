@@ -394,7 +394,7 @@ class Game {
                     return;
                 }
 
-                let tankIndex = parseInt(key[5]) - 1 % COLOURS.length;
+                let tankIndex = parseInt(key.substring(5)) - 1 % COLOURS.length;
                 let position = objData.position;
 
                 const tankContainer = new CustomPIXIContainer();
