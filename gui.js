@@ -6,6 +6,7 @@ const CONSTANTS = {
     powerupRadius: 15,
     tankBarrelWidth: 7,
     tankBarrelHeight: 20,
+    pathIndicatorRadius: 5
 };
 
 const TIME_FACTOR = 2;
@@ -77,6 +78,10 @@ const powerupTextures = {
     SPEED: PIXI.Texture.from("PNG/Tmp/speed.png"),
 };
 
+const pathIndicatorTextures = {
+    Red: PIXI.Texture.from("PNG/Obstacles/barrelRed_up.png"),
+}
+
 class Game {
     constructor(divId, gameInfo, dimensions) {
         this.main_div = document.getElementById(divId);
@@ -106,6 +111,8 @@ class Game {
         this.mapInitialised = false;
         this.tanksInitialised = false;
         this.teamStatusInitialised = false;
+
+        this.pathIndicators = [];
 
         this.initControls();
         this.initStatus();
@@ -498,6 +505,32 @@ class Game {
         return bullet;
     }
 
+    updatePathIndicators(pathIndicators) {
+        if (pathIndicators.length != this.pathIndicators.length ||
+            !pathIndicators.reduce((acc, e, i) => acc && e === this.pathIndicators[i], true)) {
+            // remove old path indicators
+            this.pathIndicators.forEach(point => {
+                this.moving_layer.removeChild(point);
+                point.destroy();
+            });
+
+            // add new path indicators
+            this.pathIndicators = [];
+            pathIndicators.forEach(([x, y]) => {
+                let sprite = new PIXI.Sprite(pathIndicatorTextures.Red);
+                sprite.anchor.set(0.5, 0.5);
+                sprite.height = CONSTANTS.pathIndicatorRadius * this.unitHeight * 2;
+                sprite.width = CONSTANTS.pathIndicatorRadius * this.unitWidth * 2;
+                let coord = this.continuousToCanvasCoords(x, y);
+                console.log(x, y)
+                sprite.x = coord.x;
+                sprite.y = coord.y;
+                this.moving_layer.addChild(sprite);
+                this.pathIndicators.push(sprite);
+            });
+        }
+    }
+
     destroyBullet(key) {
         if (!this.bullets.hasOwnProperty(key)) {
             return;
@@ -652,6 +685,9 @@ class Game {
                     this.spawnBullet(key, objData);
                 }
             });
+
+            let newPathIndicators = this.gameInfo.getTimestepData(prevIndex)["path_indicators"];
+            this.updatePathIndicators(newPathIndicators);
 
             // powerups
             let powerups = Object.entries(
