@@ -1,4 +1,4 @@
-const POLL_FREQUENCY_DELAY = 500;
+const POLL_FREQUENCY_DELAY = 200;
 
 class GameInfo {
     constructor(baseUrl, infoDivId) {
