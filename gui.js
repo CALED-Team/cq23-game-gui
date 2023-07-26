@@ -330,13 +330,13 @@ class Game {
                 );
                 obstacle.width = this.tileWidth;
                 obstacle.height = this.tileHeight;
-                obstacle.anchor.set(0, 0);
+                obstacle.anchor.set(0.5, 0.5);
 
                 let [x, y] = obj.position;
                 let new_pos = this.continuousToCanvasCoords(x, y);
 
                 obstacle.x = new_pos.x;
-                obstacle.y = new_pos.y - this.tileHeight;
+                obstacle.y = new_pos.y;
                 this.ground_layer.addChild(obstacle);
 
                 this.walls[key] = obstacle;
