@@ -229,13 +229,25 @@ class Game {
 
         // initial setup
         if (!this.teamStatusInitialised) {
-            this.teamOneStatusDiv.innerHTML += `<div><img src="PNG/Tanks/tank${COLOURS[parseInt(this.gameInfo.clientInfo[0].id) % COLOURS.length]}_outline.png"/><span>Team 1</span><span>${this.gameInfo.clientInfo[0].name}</span></div>`;
-            this.teamTwoStatusDiv.innerHTML += `<div><img src="PNG/Tanks/tank${COLOURS[parseInt(this.gameInfo.clientInfo[1].id) % COLOURS.length]}_outline.png"/><span>Team 2</span><span>${this.gameInfo.clientInfo[1].name}</span></div>`;
+            if (this.gameInfo.clientInfo[0].id < this.gameInfo.clientInfo[1].id) {
+                this.teamOneId = this.gameInfo.clientInfo[0].id;
+                this.teamTwoId = this.gameInfo.clientInfo[1].id;
+            } else {
+                this.teamOneId = this.gameInfo.clientInfo[1].id;
+                this.teamTwoId = this.gameInfo.clientInfo[0].id;
+            }
+            this.teamIdToIndex = {}
+            this.teamIdToIndex[this.teamOneId] = 0;
+            this.teamIdToIndex[this.teamTwoId] = 1;
+
+            this.teamOneStatusDiv.innerHTML += `<div><img src="PNG/Tanks/tank${COLOURS[0]}_outline.png"/><span>Team 1</span><span>${this.gameInfo.clientInfo[0].name}</span></div>`;
+            this.teamTwoStatusDiv.innerHTML += `<div><img src="PNG/Tanks/tank${COLOURS[1]}_outline.png"/><span>Team 2</span><span>${this.gameInfo.clientInfo[1].name}</span></div>`;
 
             this.teamOneInnerStatusDiv = document.createElement("div");
             this.teamTwoInnerStatusDiv = document.createElement("div");
             this.teamOneStatusDiv.appendChild(this.teamOneInnerStatusDiv);
             this.teamTwoStatusDiv.appendChild(this.teamTwoInnerStatusDiv);
+
 
             this.teamStatusInitialised = true;
         }
@@ -250,10 +262,10 @@ class Game {
             if (this.gameInfo.finished) {
                 // display result info
                 this.gameInfo.winners.forEach((key) => {
-                    if (key == this.gameInfo.clientInfo[0].id) {
+                    if (key == this.teamOneId) {
                         this.teamOneStatusDiv.classList.add("winner");
                     }
-                    if (key == this.gameInfo.clientInfo[1].id) {
+                    if (key == this.teamTwoId) {
                         this.teamTwoStatusDiv.classList.add("winner");
                     }
                 });
@@ -262,11 +274,11 @@ class Game {
             return;
         }
 
-        let tank1 = current_data.updated_objects[`tank-${this.gameInfo.clientInfo[0].id}`];
+        let tank1 = current_data.updated_objects[`tank-${this.teamOneId}`];
         this.teamOneInnerStatusDiv.innerHTML += `<span>hp: ${tank1.hp}</span><br>`;
         this.teamOneInnerStatusDiv.innerHTML += `<span>powerups: ${tank1.powerups}</span><br>`;
 
-        let tank2 = current_data.updated_objects[`tank-${this.gameInfo.clientInfo[1].id}`];
+        let tank2 = current_data.updated_objects[`tank-${this.teamTwoId}`];
         this.teamTwoInnerStatusDiv.innerHTML += `<span>hp: ${tank2.hp}</span><br>`;
         this.teamTwoInnerStatusDiv.innerHTML += `<span>powerups: ${tank2.powerups}</span><br>`;
     }
@@ -394,8 +406,8 @@ class Game {
                     return;
                 }
 
-                let tankIndex = parseInt(key.substring(5)) % COLOURS.length;
-                console.log(key, tankIndex);
+                let tankId = parseInt(key.substring(5));
+                let tankIndex = this.teamIdToIndex[tankId];
                 let position = objData.position;
 
                 const tankContainer = new CustomPIXIContainer();
@@ -561,6 +573,9 @@ class Game {
             }
 
             // TODO: initialise client info
+            if (!this.teamStatusInitialised) {
+                this.updateTeamStatus();
+            }
 
             if (!this.tanksInitialised) {
                 let first_timestep_data = this.gameInfo.getTimestepData(0);
