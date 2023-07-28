@@ -110,7 +110,7 @@ class GameInfo {
         } else {
             this.infoDiv.innerHTML = `Collecting replay file: ${this.counter}, <span style="color: grey">number of attempts: ${(this.counter in this.attempts ? this.attempts[this.counter] : 0)}</span>`;
         }
-        this.infoDiv.innerHTML += `<br>Total turns collected: ${this.organisedData.length}`;
+        this.infoDiv.innerHTML += `<br>Total game ticks collected: ${this.organisedData.length}`;
     }
 
     update() {
