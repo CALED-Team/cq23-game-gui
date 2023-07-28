@@ -6,7 +6,7 @@ const CONSTANTS = {
     powerupRadius: 15,
     tankBarrelWidth: 7,
     tankBarrelHeight: 20,
-    pathIndicatorRadius: 5
+    pathIndicatorRadius: 4
 };
 
 const TIME_FACTOR = 2;
@@ -79,7 +79,7 @@ const powerupTextures = {
 };
 
 const pathIndicatorTextures = {
-    Red: PIXI.Texture.from("PNG/Obstacles/barrelRed_up.png"),
+    Green: PIXI.Texture.from("PNG/Obstacles/barrelGreen_up.png"),
 }
 
 class Game {
@@ -526,8 +526,9 @@ class Game {
             // add new path indicators
             this.pathIndicators = [];
             pathIndicators.forEach(([x, y]) => {
-                let sprite = new PIXI.Sprite(pathIndicatorTextures.Red);
+                let sprite = new PIXI.Sprite(pathIndicatorTextures.Green);
                 sprite.anchor.set(0.5, 0.5);
+                sprite.alpha = 0.6;
                 sprite.height = CONSTANTS.pathIndicatorRadius * this.unitHeight * 2;
                 sprite.width = CONSTANTS.pathIndicatorRadius * this.unitWidth * 2;
                 let coord = this.continuousToCanvasCoords(x, y);
