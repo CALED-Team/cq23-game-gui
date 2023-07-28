@@ -276,6 +276,15 @@ class Game {
                         this.teamTwoStatusDiv.classList.add("winner");
                     }
                 });
+
+                this.gameInfo.losers.forEach((key) => {
+                    if (key == this.teamOneId) {
+                        this.teamOneStatusDiv.classList.add("loser");
+                    }
+                    if (key == this.teamTwoId) {
+                        this.teamTwoStatusDiv.classList.add("loser");
+                    }
+                });
             }
 
             return;

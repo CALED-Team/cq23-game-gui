@@ -63,6 +63,22 @@ body, html {
     color: rgb(125, 199, 15);
 }
 
+#gui .teams > div.loser {
+    position: relative;
+    border: 3px solid rgb(199, 15, 30);
+    box-shadow: 0px 0px 10px 0px rgb(199, 15, 30);
+}
+
+#gui .teams > div.loser::after {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+    content: "!!! LOSER !!!";
+    font-size: 140%;
+    color: rgb(199, 15, 30);
+}
+
 #gui .controls {
     grid-area: 3 / 1 / 3 / 1;
     padding: 4px;
