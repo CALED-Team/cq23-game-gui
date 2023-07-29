@@ -293,10 +293,14 @@ class Game {
         let tank1 = current_data.updated_objects[`tank-${this.teamOneId}`];
         this.teamOneInnerStatusDiv.innerHTML += `<span>hp: ${tank1.hp}</span><br>`;
         this.teamOneInnerStatusDiv.innerHTML += `<span>powerups: ${tank1.powerups}</span><br>`;
+        this.teamOneInnerStatusDiv.innerHTML += `<span>position: ${tank1.position}</span><br>`;
+        this.teamOneInnerStatusDiv.innerHTML += `<span>velocity: ${tank1.velocity}</span><br>`;
 
         let tank2 = current_data.updated_objects[`tank-${this.teamTwoId}`];
         this.teamTwoInnerStatusDiv.innerHTML += `<span>hp: ${tank2.hp}</span><br>`;
         this.teamTwoInnerStatusDiv.innerHTML += `<span>powerups: ${tank2.powerups}</span><br>`;
+        this.teamOneInnerStatusDiv.innerHTML += `<span>position: ${tank2.position}</span><br>`;
+        this.teamOneInnerStatusDiv.innerHTML += `<span>velocity: ${tank2.velocity}</span><br>`;
     }
 
     initMap() {
