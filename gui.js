@@ -238,23 +238,26 @@ class Game {
         if (!this.teamStatusInitialised) {
             if (this.gameInfo.clientInfo[0].id < this.gameInfo.clientInfo[1].id) {
                 this.teamOneId = this.gameInfo.clientInfo[0].id;
+                this.teamOneName = this.gameInfo.clientInfo[0].name;
                 this.teamTwoId = this.gameInfo.clientInfo[1].id;
+                this.teamTwoName = this.gameInfo.clientInfo[1].name;
             } else {
                 this.teamOneId = this.gameInfo.clientInfo[1].id;
+                this.teamOneName = this.gameInfo.clientInfo[1].name;
                 this.teamTwoId = this.gameInfo.clientInfo[0].id;
+                this.teamTwoName = this.gameInfo.clientInfo[0].name;
             }
             this.teamIdToIndex = {}
             this.teamIdToIndex[this.teamOneId] = 0;
             this.teamIdToIndex[this.teamTwoId] = 1;
 
-            this.teamOneStatusDiv.innerHTML += `<div><img src="PNG/Tanks/tank${COLOURS[0]}_outline.png"/><span>Team 1</span><span>${this.gameInfo.clientInfo[0].name}</span></div>`;
-            this.teamTwoStatusDiv.innerHTML += `<div><img src="PNG/Tanks/tank${COLOURS[1]}_outline.png"/><span>Team 2</span><span>${this.gameInfo.clientInfo[1].name}</span></div>`;
+            this.teamOneStatusDiv.innerHTML += `<div><img src="PNG/Tanks/tank${COLOURS[0]}_outline.png"/><span>Team 1</span><span>${this.teamOneName}</span></div>`;
+            this.teamTwoStatusDiv.innerHTML += `<div><img src="PNG/Tanks/tank${COLOURS[1]}_outline.png"/><span>Team 2</span><span>${this.teamTwoName}</span></div>`;
 
             this.teamOneInnerStatusDiv = document.createElement("div");
             this.teamTwoInnerStatusDiv = document.createElement("div");
             this.teamOneStatusDiv.appendChild(this.teamOneInnerStatusDiv);
             this.teamTwoStatusDiv.appendChild(this.teamTwoInnerStatusDiv);
-
 
             this.teamStatusInitialised = true;
         }
@@ -536,7 +539,7 @@ class Game {
                 sprite.height = CONSTANTS.pathIndicatorRadius * this.unitHeight * 2;
                 sprite.width = CONSTANTS.pathIndicatorRadius * this.unitWidth * 2;
                 let coord = this.continuousToCanvasCoords(x, y);
-                console.log(x, y)
+                // console.log(x, y)
                 sprite.x = coord.x;
                 sprite.y = coord.y;
                 this.moving_layer.addChild(sprite);
